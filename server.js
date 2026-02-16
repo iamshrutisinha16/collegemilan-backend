@@ -10,6 +10,11 @@ app.use(express.json());
 app.use(cors());
 mongoDB.connect();
 
+app.get("/", (req, res) => {
+  res.send("Backend is running successfully");
+});
+
+
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/careers', require('./routes/careerRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
