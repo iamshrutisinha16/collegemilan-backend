@@ -7,7 +7,10 @@ const mongoDB = require('./config/db');
 const app = express();
 app.use(express.json()); 
 
-app.use(cors());
+app.use(cors({
+  origin: "https://milaneducation.vercel.app"
+}));
+
 mongoDB.connect();
 
 app.get("/", (req, res) => {
