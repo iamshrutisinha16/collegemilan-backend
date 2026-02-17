@@ -10,8 +10,7 @@ app.use(express.json());
 const corsOptions = {
   origin: ["http://localhost:5173", "https://milaneducation.vercel.app"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
+  allowedHeaders: ["Content-Type", "x-auth-token"]
 };
 
 app.use(cors(corsOptions)); 
