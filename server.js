@@ -7,16 +7,20 @@ const mongoDB = require('./config/db');
 const app = express();
 app.use(express.json()); 
 
-app.use(cors({
-  origin: "https://milaneducation.vercel.app"
-}));
+const corsOptions = {
+  origin: ["http://localhost:5173", "https://milaneducation.vercel.app"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+};
+
+app.use(cors(corsOptions)); 
 
 mongoDB.connect();
 
 app.get("/", (req, res) => {
   res.send("Backend is running successfully");
 });
-
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/user', require('./routes/userRoutes'));
@@ -30,5 +34,5 @@ app.use('/api/enquiries', require('./routes/enquiry'));
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-    console.log(` Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
