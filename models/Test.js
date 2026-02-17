@@ -9,7 +9,9 @@ const testSchema = new mongoose.Schema({
   title: String,
   price: Number,
   oldPrice: Number,
-  deliverables: [String]
+  deliverables: [String],
+  status: { type: String, enum: ["Pending", "Completed"], default: "Pending" }, 
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User" } 
 });
 
 module.exports = mongoose.model('test', testSchema);
