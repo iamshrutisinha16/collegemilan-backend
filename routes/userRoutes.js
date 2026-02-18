@@ -7,12 +7,21 @@ const Payment = require("../models/Payment");
 
 router.get("/dashboard-data", auth, async (req, res) => {
     try {
-        // req.user humein middleware se mil raha hai
+        // 1. Profile fetch karein
         const profile = await User.findById(req.user.id).select("-password");
+        
+        // 2. Tests fetch karein
         const tests = await Test.find({ user: req.user.id });
 
-        res.json({ profile, tests });
+        const payments = await Payment.find({ user: req.user.id }).populate("test");
+        res.json({ 
+            profile, 
+            tests, 
+            payments 
+        });
+        
     } catch (error) {
+        console.error("Dashboard Error:", error);
         res.status(500).json({ message: "Server Error" });
     }
 });
