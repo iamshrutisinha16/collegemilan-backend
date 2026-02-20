@@ -1,20 +1,52 @@
 const express = require("express");
 const router = express.Router();
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 const User = require("../models/User");
 const Course = require("../models/Course");
 const College = require("../models/College");
 const Enquiry = require("../models/Enquiry");
 
-// ✅ Import both middlewares
 const { protect, protectAdmin } = require("../middleware/authMiddleware");
 
+const SECRET_KEY = "MY_SECRET_KEY_123";
 
-// GET DASHBOARD STATS
+//ADMIN LOGIN
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user || user.role !== "admin") {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      SECRET_KEY,
+      { expiresIn: "1d" }
+    );
+
+    res.json({ token });
+
+  } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+//DASHBOARD
 router.get(
   "/dashboard-stats",
-  protect,          // 🔐 First verify token
-  protectAdmin,     // 🛡 Then check admin role
+  protect,
+  protectAdmin,
   async (req, res) => {
     try {
       const totalUsers = await User.countDocuments();
@@ -28,6 +60,7 @@ router.get(
         totalCourses,
         totalEnquiries,
       });
+
     } catch (error) {
       console.error("Dashboard Error:", error);
       res.status(500).json({ message: "Dashboard Error" });
