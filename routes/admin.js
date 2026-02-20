@@ -14,10 +14,10 @@ const SECRET_KEY = "MY_SECRET_KEY_123";
 
 //ADMIN LOGIN
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ username });
 
     if (!user || user.role !== "admin") {
       return res.status(400).json({ message: "Invalid credentials" });
