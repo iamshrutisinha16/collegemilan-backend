@@ -2,8 +2,8 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-
-const User = require("../models/User");
+const User = require("../models/Admin");
+const Admin = require("../models/Admin");
 const Course = require("../models/Course");
 const College = require("../models/College");
 const Enquiry = require("../models/Enquiry");
@@ -12,24 +12,25 @@ const { protect, protectAdmin } = require("../middleware/authMiddleware");
 
 const SECRET_KEY = "MY_SECRET_KEY_123";
 
-//ADMIN LOGIN
+// ADMIN LOGIN
 router.post("/login", async (req, res) => {
   const { username, password } = req.body;
 
   try {
-    const user = await User.findOne({ username });
+    const admin = await Admin.findOne({ username });
 
-    if (!user || user.role !== "admin") {
+    if (!admin) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, admin.password);
+
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     const token = jwt.sign(
-      { id: user._id, role: user.role },
+      { id: admin._id, role: "admin" },
       SECRET_KEY,
       { expiresIn: "1d" }
     );
