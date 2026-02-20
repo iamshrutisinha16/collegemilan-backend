@@ -7,7 +7,6 @@ const jwt = require("jsonwebtoken");
 
 const client = new OAuth2Client("601784931771-190n8hdisb0crckht1g3v26aml6pntlc.apps.googleusercontent.com");
 
-// Token banane ka function (Cleaner code ke liye)
 const generateToken = (id, role) => {
   return jwt.sign({ id, role }, "MY_SECRET_KEY_123", { expiresIn: "30d" });
 };
@@ -25,7 +24,7 @@ router.post("/register", async (req, res) => {
     const user = await User.create({ email, password: hashedPassword });
 
     res.status(201).json({
-      token: generateToken(user._id, user.role), // TOKEN ADDED
+      token: generateToken(user._id, user.role),
       _id: user.id,
       email: user.email,
       message: "Account Created Successfully",
@@ -43,7 +42,7 @@ router.post("/login", async (req, res) => {
 
     if (user && user.password && (await bcrypt.compare(password, user.password))) {
       res.json({
-        token: generateToken(user._id, user.role), // TOKEN ADDED
+        token: generateToken(user._id, user.role),
         _id: user.id,
         email: user.email,
         role: user.role,
@@ -57,6 +56,39 @@ router.post("/login", async (req, res) => {
   }
 });
 
+/* Adminlogin*/
+router.post("/admin/login", async(req,res) => {
+  try{
+    const {username, password} = req.body;
+    const user = await User.findOne({ email: username });
+
+     if (!user) {
+      return res.status(401).json({ message: "Admin not found" });
+    }
+     // Role check (IMPORTANT)
+    if (user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied. Not an admin." });
+    }
+
+    // Password match
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    res.json({
+      token: generateToken(user._id, user.role),
+      _id: user.id,
+      email: user.email,
+      role: user.role,
+      message: "Admin Login Successful",
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+});
 /* GOOGLE LOGIN */
 router.post("/google", async (req, res) => {
   try {

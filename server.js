@@ -21,14 +21,16 @@ app.get("/", (req, res) => {
   res.send("Backend is running successfully");
 });
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/user', require('./routes/userRoutes'));
-app.use('/api/careers', require('./routes/careerRoutes'));
-app.use('/api/contact', require('./routes/contactRoutes'));
-app.use('/api', require('./routes/testRoutes'));
-app.use('/api/universities', require('./routes/university'));
-app.use('/api/courses', require('./routes/course'));
-app.use('/api/enquiries', require('./routes/enquiry'));
+//app.use('/api/auth', require('./routes/auth'));
+//app.use('/api/user', require('./routes/userRoutes'));
+//app.use('/api/careers', require('./routes/careerRoutes'));
+//app.use('/api/contact', require('./routes/contactRoutes'));
+//app.use('/api', require('./routes/testRoutes'));
+//app.use('/api/universities', require('./routes/university'));
+//app.use('/api/courses', require('./routes/course'));
+//app.use('/api/enquiries', require('./routes/enquiry'));
+app.use('/api/admin', require('./routes/admin'));
+//app.use('/api/adminCollege', require('./routes/adminCollege'));
 
 const PORT = process.env.PORT || 5000;
 
