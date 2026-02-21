@@ -4,7 +4,7 @@ const router = express.Router();
 const Enquiry = require("../models/Enquiry");
 const { protect, protectAdmin } = require("../middleware/authMiddleware");
 
-// ✅ Get All Enquiries
+//Get All Enquiries
 router.get("/", protect, protectAdmin, async (req, res) => {
   try {
     const enquiries = await Enquiry.find().sort({ createdAt: -1 });
@@ -14,7 +14,7 @@ router.get("/", protect, protectAdmin, async (req, res) => {
   }
 });
 
-// ✅ Delete Enquiry
+//Delete Enquiry
 router.delete("/:id", protect, protectAdmin, async (req, res) => {
   try {
     await Enquiry.findByIdAndDelete(req.params.id);
