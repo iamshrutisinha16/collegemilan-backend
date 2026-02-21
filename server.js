@@ -35,9 +35,7 @@ app.use('/api/enquiries', require('./routes/enquiry'));
 
 // Admin routes
 app.use('/api/admin', require('./routes/admin'));
-
-// --- IMPORTANT: Admin Colleges route updated to match frontend ---
-app.use('/api/admin/colleges', require('./routes/adminCollege'));
+app.use('/api/admin/dashboard', require('./routes/dashboardRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
