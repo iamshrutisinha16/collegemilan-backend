@@ -1,4 +1,3 @@
-// backend/routes/collegeRoutes.js
 const express = require("express");
 const router = express.Router();
 
@@ -9,12 +8,12 @@ const {
   deleteCollege 
 } = require("../controllers/collegeController");
 
-const protect = require("../middleware/authMiddleware"); 
+const { protect } = require("../middleware/authMiddleware"); 
 
-//router.get("/", protect, getColleges)
-router.get("/", getColleges);            
-router.post("/", addCollege);             
-router.put("/:id", updateCollege);        
-router.delete("/:id", deleteCollege);    
+// All routes protected
+router.get("/", protect, getColleges);
+router.post("/", protect, addCollege);             
+router.put("/:id", protect, updateCollege);        
+router.delete("/:id", protect, deleteCollege);    
 
 module.exports = router;
