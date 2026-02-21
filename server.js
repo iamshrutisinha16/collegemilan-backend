@@ -5,15 +5,15 @@ const bodyParser = require('body-parser');
 const mongoDB = require('./config/db');
 
 const app = express();
+app.use(express.json()); 
+
 const corsOptions = {
   origin: ["http://localhost:5173", "https://milaneducation.vercel.app"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "x-auth-token", "Authorization"] 
+  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"]
 };
 
 app.use(cors(corsOptions)); 
-
-app.use(express.json());
 
 mongoDB.connect();
 
