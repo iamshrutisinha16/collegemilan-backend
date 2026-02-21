@@ -1,22 +1,30 @@
 const mongoose = require("mongoose");
 
-const collegeSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    university: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "University",
-      required: true
-    },
-    location: { type: String },
-    website: { type: String },
-    status: {
-      type: String,
-      enum: ["active", "inactive"],
-      default: "active"
-    }
+const collegeSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
   },
-  { timestamps: true }
-);
+  location: {
+    type: String,
+    required: true,
+  },
+  state: {
+    type: String,
+    required: true,
+  },
+  website: {
+    type: String,
+    default: "", 
+  },
+  description: {
+    type: String,
+    default: "",
+  },
+  status: {
+    type: String,
+    default: "Active", 
+  },
+}, { timestamps: true }); 
 
 module.exports = mongoose.model("College", collegeSchema);
