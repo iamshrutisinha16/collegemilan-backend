@@ -1,34 +1,33 @@
 const jwt = require("jsonwebtoken");
 
-// Use environment variable first, fallback to hardcoded secret
-const SECRET_KEY = process.env.JWT_SECRET || "MY_SECRET_KEY_123";
+const SECRET_KEY = "MY_SECRET_KEY_123";  
 
-// 🔐 Protect routes (check token)
 const protect = (req, res, next) => {
   let token;
 
-  // Check for Authorization header
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
-    token = req.headers.authorization.split(" ")[1]; // Extract token
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
+    token = req.headers.authorization.split(" ")[1];
   }
 
   if (!token) {
-    return res.status(401).json({ message: "No token, authorization denied" });
+    return res.status(401).json({ message: "No token" });
   }
 
   try {
-    const decoded = jwt.verify(token, SECRET_KEY); // verify JWT
-    req.user = decoded; // attach user info to req
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded;
     next();
   } catch (err) {
-    return res.status(401).json({ message: "Token is not valid" });
+    return res.status(401).json({ message: "Token not valid" });
   }
 };
 
-// 🛡 Only allow admin users
 const protectAdmin = (req, res, next) => {
   if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied. Admin only." });
+    return res.status(403).json({ message: "Admin only" });
   }
   next();
 };
