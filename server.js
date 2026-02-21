@@ -29,6 +29,7 @@ app.use('/api/careers', require('./routes/careerRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/test', require('./routes/testRoutes'));
 app.use('/api/universities', require('./routes/university'));
+app.use('/api/qualifications', require('./routes/qualificationRoutes'));
 app.use('/api/courses', require('./routes/course'));
 app.use('/api/enquiries', require('./routes/enquiry'));
 
