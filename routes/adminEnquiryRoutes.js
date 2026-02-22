@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const Enquiry = require("../models/AdminEnquiry");
+const Enquiry = require("../models/Enquiry");
 const { protect, protectAdmin } = require("../middleware/authMiddleware");
 
 //GET All Enquiries 
