@@ -9,9 +9,11 @@ app.use(express.json());
 // CORS configuration
 const corsOptions = {
   origin: ["http://localhost:5173", "https://milaneducation.vercel.app"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  
+  allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
+  credentials: true
 };
+
 app.use(cors(corsOptions)); 
 
 // Connect MongoDB

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const AdminSetting = require("../models/AdminSetting");
+const Settings = require("../models/AdminSetting");
 const bcrypt = require("bcryptjs");
 
 // GET Settings
