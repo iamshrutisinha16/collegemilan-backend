@@ -7,26 +7,28 @@ const { protect, protectAdmin } = require("../middleware/authMiddleware");
 // CREATE Course
 router.post("/", protect, protectAdmin, async (req, res) => {
   try {
+    console.log("Incoming Course Payload:", req.body);
+
     const { course_name, university, qualification, duration } = req.body;
 
     if (!course_name || !university) {
+      console.log("Validation failed:", req.body);
       return res.status(400).json({ message: "Course Name and University are required" });
     }
 
     const course = await Course.create({
       course_name,
-      university,                  // Mongo ObjectId
+      university,
       qualification: qualification || null,
       duration,
     });
 
     res.status(201).json(course);
   } catch (error) {
-    console.error("Create Course Error:", error.message);
+    console.error("Create Course Error:", error);
     res.status(500).json({ message: error.message });
   }
 });
-
 // GET All Courses
 router.get("/", protect, protectAdmin, async (req, res) => {
   try {
