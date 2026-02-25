@@ -14,24 +14,27 @@ const courseSchema = new mongoose.Schema(
       required: true,
     },
 
-    qualification: { 
+    qualification: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Qualification",
-      required: false,   
+      default: null, 
     },
 
     duration: {
       type: String,
       trim: true,
+      default: "",
     },
 
     fees: {
       type: Number,
+      default: 0,
     },
 
     description: {
       type: String,
       trim: true,
+      default: "",
     },
 
     status: {
@@ -40,7 +43,10 @@ const courseSchema = new mongoose.Schema(
       default: "active",
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    strictPopulate: false, 
+  }
 );
 
 module.exports = mongoose.model("Course", courseSchema);
