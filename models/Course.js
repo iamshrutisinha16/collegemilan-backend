@@ -5,6 +5,7 @@ const courseSchema = new mongoose.Schema(
     course_name: {
       type: String,
       required: true,
+      trim: true,
     },
 
     university: {
@@ -13,8 +14,15 @@ const courseSchema = new mongoose.Schema(
       required: true,
     },
 
+    qualification: { 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Qualification",
+      required: false,   
+    },
+
     duration: {
       type: String,
+      trim: true,
     },
 
     fees: {
@@ -23,6 +31,7 @@ const courseSchema = new mongoose.Schema(
 
     description: {
       type: String,
+      trim: true,
     },
 
     status: {
