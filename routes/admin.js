@@ -5,7 +5,6 @@ const bcrypt = require("bcryptjs");
 const User = require("../models/Admin");
 const Admin = require("../models/Admin");
 const Course = require("../models/Course");
-const College = require("../models/College");
 const Enquiry = require("../models/Enquiry");
 
 const { protect, protectAdmin } = require("../middleware/authMiddleware");

@@ -27,7 +27,7 @@ router.post("/", protect, protectAdmin, async (req, res) => {
     const course = await Course.create({
       course_name,
       university,
-      qualification: qualification || undefined, // safe handling
+      qualification: qualification || null, // safer than undefined
       duration,
       fees,
       description,
@@ -47,8 +47,15 @@ router.get("/", protect, protectAdmin, async (req, res) => {
   try {
     const courses = await Course.find()
       .sort({ createdAt: -1 })
-      .populate("university", "name")
-      .populate("qualification", "name");
+      .populate({
+        path: "university",
+        select: "name",
+      })
+      .populate({
+        path: "qualification",
+        select: "name",
+        options: { strictPopulate: false }, // 🔥 important fix
+      });
 
     res.status(200).json(courses);
   } catch (error) {
@@ -74,7 +81,7 @@ router.put("/:id", protect, protectAdmin, async (req, res) => {
     const updateData = {
       course_name,
       university,
-      qualification: qualification || undefined,
+      qualification: qualification || null,
       duration,
       fees,
       description,
