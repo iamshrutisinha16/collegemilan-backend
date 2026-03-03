@@ -5,19 +5,19 @@ const enquirySchema = new mongoose.Schema(
     course: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course",
-      required: true,
+      required: false,
     },
 
     university: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "University",
-      required: true,
+      required: false,
     },
 
     learningMode: {
       type: String,
       enum: ["online", "offline", "distance"],
-      required: true,
+      required: false,
     },
 
     fullName: {
@@ -29,7 +29,7 @@ const enquirySchema = new mongoose.Schema(
     gender: {
       type: String,
       enum: ["Male", "Female", "Other"],
-      required: true,
+      required: false,
     },
 
     email: {
@@ -52,7 +52,7 @@ const enquirySchema = new mongoose.Schema(
 
     address: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
