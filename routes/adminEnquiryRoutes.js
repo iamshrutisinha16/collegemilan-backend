@@ -15,7 +15,7 @@ router.get("/", protect, protectAdmin, async (req, res) => {
     const filter = status ? { status } : {};
 
     const enquiries = await Enquiry.find(filter)
-      .populate("course", "name")
+      .populate("course", "course_name") // ✅ FIXED
       .populate("university", "name")
       .sort({ createdAt: -1 });
 
@@ -41,7 +41,7 @@ router.get("/", protect, protectAdmin, async (req, res) => {
 router.get("/:id", protect, protectAdmin, async (req, res) => {
   try {
     const enquiry = await Enquiry.findById(req.params.id)
-      .populate("course", "name")
+      .populate("course", "course_name") // ✅ FIXED
       .populate("university", "name");
 
     if (!enquiry) {
@@ -76,7 +76,6 @@ router.put("/:id/status", protect, protectAdmin, async (req, res) => {
     const allowedStatus = [
       "New",
       "Contacted",
-      "Follow-Up",
       "Converted",
       "Rejected",
     ];
@@ -92,7 +91,9 @@ router.put("/:id/status", protect, protectAdmin, async (req, res) => {
       req.params.id,
       { status },
       { new: true, runValidators: true }
-    );
+    )
+      .populate("course", "course_name")
+      .populate("university", "name");
 
     if (!enquiry) {
       return res.status(404).json({
@@ -128,7 +129,9 @@ router.put("/:id/remarks", protect, protectAdmin, async (req, res) => {
       req.params.id,
       { remarks },
       { new: true }
-    );
+    )
+      .populate("course", "course_name")
+      .populate("university", "name");
 
     if (!enquiry) {
       return res.status(404).json({
