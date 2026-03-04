@@ -116,6 +116,7 @@ app.use("/api/admin/enquiries", require("./routes/adminEnquiryRoutes"));
 app.use("/api/admin/universities", require("./routes/adminUniversitiesRoutes"));
 app.use("/api/admin/settings", require("./routes/adminSettingRoutes"));
 app.use("/api/admin/events", require("./routes/events"));
+app.use("/api/admin/careers", require("./routes/adminCareerRoutes"));
 
 
 const PORT = process.env.PORT || 5000;
