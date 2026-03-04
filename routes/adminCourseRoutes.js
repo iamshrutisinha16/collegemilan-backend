@@ -19,22 +19,26 @@ router.post("/", protect, protectAdmin, async (req, res) => {
     } = req.body;
 
     if (!course_name || !university) {
-      return res
-        .status(400)
-        .json({ message: "Course Name and University are required" });
+      return res.status(400).json({
+        message: "Course Name and University are required",
+      });
     }
 
     const course = await Course.create({
       course_name,
       university,
-      qualification: qualification || null, // safer than undefined
+      qualification: qualification || null,
       duration,
       fees,
       description,
       status,
     });
 
-    res.status(201).json(course);
+    const populatedCourse = await Course.findById(course._id)
+      .populate("university", "name")
+      .populate("qualification", "name");
+
+    res.status(201).json(populatedCourse);
   } catch (error) {
     console.error("Create Course Error:", error);
     res.status(500).json({ message: error.message });
@@ -47,15 +51,8 @@ router.get("/", protect, protectAdmin, async (req, res) => {
   try {
     const courses = await Course.find()
       .sort({ createdAt: -1 })
-      .populate({
-        path: "university",
-        select: "name",
-      })
-      .populate({
-        path: "qualification",
-        select: "name",
-        options: { strictPopulate: false }, // 🔥 important fix
-      });
+      .populate("university", "name")
+      .populate("qualification", "name");
 
     res.status(200).json(courses);
   } catch (error) {
@@ -78,27 +75,27 @@ router.put("/:id", protect, protectAdmin, async (req, res) => {
       status,
     } = req.body;
 
-    const updateData = {
-      course_name,
-      university,
-      qualification: qualification || null,
-      duration,
-      fees,
-      description,
-      status,
-    };
-
-    const course = await Course.findByIdAndUpdate(
+    const updatedCourse = await Course.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      {
+        course_name,
+        university,
+        qualification: qualification || null,
+        duration,
+        fees,
+        description,
+        status,
+      },
       { new: true, runValidators: true }
-    );
+    )
+      .populate("university", "name")
+      .populate("qualification", "name");
 
-    if (!course) {
+    if (!updatedCourse) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    res.status(200).json(course);
+    res.status(200).json(updatedCourse);
   } catch (error) {
     console.error("Update Course Error:", error);
     res.status(500).json({ message: error.message });
