@@ -5,7 +5,7 @@ const Course = require("../models/Course");
 const { protect, protectAdmin } = require("../middleware/authMiddleware");
 
 
-// ================= CREATE COURSE =================
+// ================= CREATE Course =================
 router.post("/", protect, protectAdmin, async (req, res) => {
   try {
     const {
@@ -18,65 +18,54 @@ router.post("/", protect, protectAdmin, async (req, res) => {
       status,
     } = req.body;
 
-    // 🔥 Basic Validation
     if (!course_name || !university) {
-      return res.status(400).json({
-        success: false,
-        message: "Course Name and University are required",
-      });
+      return res
+        .status(400)
+        .json({ message: "Course Name and University are required" });
     }
 
     const course = await Course.create({
-      course_name: course_name.trim(),
+      course_name,
       university,
-      qualification: qualification || null,
-      duration: duration || "",
-      fees: fees || 0,
-      description: description || "",
-      status: status || "active",
+      qualification: qualification || null, // safer than undefined
+      duration,
+      fees,
+      description,
+      status,
     });
 
-    res.status(201).json({
-      success: true,
-      message: "Course created successfully",
-      data: course,
-    });
-
+    res.status(201).json(course);
   } catch (error) {
     console.error("Create Course Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error while creating course",
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
 
-// ================= GET ALL COURSES =================
+// ================= GET All Courses =================
 router.get("/", protect, protectAdmin, async (req, res) => {
   try {
     const courses = await Course.find()
       .sort({ createdAt: -1 })
-      .populate("university", "name")
-      .populate("qualification", "name");
+      .populate({
+        path: "university",
+        select: "name",
+      })
+      .populate({
+        path: "qualification",
+        select: "name",
+        options: { strictPopulate: false }, // 🔥 important fix
+      });
 
-    res.status(200).json({
-      success: true,
-      count: courses.length,
-      data: courses,
-    });
-
+    res.status(200).json(courses);
   } catch (error) {
     console.error("Get Courses Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error while fetching courses",
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
 
-// ================= UPDATE COURSE =================
+// ================= UPDATE Course =================
 router.put("/:id", protect, protectAdmin, async (req, res) => {
   try {
     const {
@@ -89,16 +78,15 @@ router.put("/:id", protect, protectAdmin, async (req, res) => {
       status,
     } = req.body;
 
-    const updateData = {};
-
-    if (course_name !== undefined) updateData.course_name = course_name.trim();
-    if (university !== undefined) updateData.university = university;
-    if (qualification !== undefined)
-      updateData.qualification = qualification || null;
-    if (duration !== undefined) updateData.duration = duration;
-    if (fees !== undefined) updateData.fees = fees;
-    if (description !== undefined) updateData.description = description;
-    if (status !== undefined) updateData.status = status;
+    const updateData = {
+      course_name,
+      university,
+      qualification: qualification || null,
+      duration,
+      fees,
+      description,
+      status,
+    };
 
     const course = await Course.findByIdAndUpdate(
       req.params.id,
@@ -107,51 +95,30 @@ router.put("/:id", protect, protectAdmin, async (req, res) => {
     );
 
     if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
+      return res.status(404).json({ message: "Course not found" });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Course updated successfully",
-      data: course,
-    });
-
+    res.status(200).json(course);
   } catch (error) {
     console.error("Update Course Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error while updating course",
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
 
-// ================= DELETE COURSE =================
+// ================= DELETE Course =================
 router.delete("/:id", protect, protectAdmin, async (req, res) => {
   try {
     const course = await Course.findByIdAndDelete(req.params.id);
 
     if (!course) {
-      return res.status(404).json({
-        success: false,
-        message: "Course not found",
-      });
+      return res.status(404).json({ message: "Course not found" });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Course deleted successfully",
-    });
-
+    res.status(200).json({ message: "Deleted successfully" });
   } catch (error) {
     console.error("Delete Course Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error while deleting course",
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
