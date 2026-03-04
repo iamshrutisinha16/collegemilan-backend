@@ -50,16 +50,22 @@ const enquirySchema = new mongoose.Schema(
       trim: true,
     },
 
+    state: {
+    type: String,
+    required: false,
+    trim: true,
+},
+
     address: {
       type: String,
       required: false,
       trim: true,
     },
 
-    // 🔥 ADMIN IMPORTANT FIELD
+    //ADMIN IMPORTANT FIELD
     status: {
       type: String,
-      enum: ["New", "Contacted", "Converted", "Rejected"],
+      enum: ["New", "Contacted", "Follow-Up", "Converted", "Rejected"],
       default: "New",
     },
   },
