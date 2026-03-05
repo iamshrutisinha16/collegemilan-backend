@@ -3,9 +3,8 @@ const router = express.Router();
 
 const Enquiry = require("../models/Enquiry");
 const University = require("../models/University");
-
+const Qualification = require("../models/Qualification"); // ✅ Add model
 const { protect, protectAdmin } = require("../middleware/authMiddleware");
-
 
 // ==========================================
 // PUBLIC: CREATE ENQUIRY (STUDENT FORM)
@@ -18,10 +17,10 @@ router.post("/", async (req, res) => {
       phone,
       course,
       university,
+      qualification, // ✅ new
       message,
     } = req.body;
 
-    // Basic validation
     if (!name || !phone || !course || !university) {
       return res.status(400).json({
         success: false,
@@ -31,12 +30,23 @@ router.post("/", async (req, res) => {
 
     // Check university exists
     const selectedUniversity = await University.findById(university);
-
     if (!selectedUniversity) {
       return res.status(404).json({
         success: false,
         message: "University not found",
       });
+    }
+
+    // Check qualification exists (optional)
+    let selectedQualification = null;
+    if (qualification) {
+      selectedQualification = await Qualification.findById(qualification);
+      if (!selectedQualification) {
+        return res.status(404).json({
+          success: false,
+          message: "Qualification not found",
+        });
+      }
     }
 
     // Create enquiry
@@ -46,6 +56,7 @@ router.post("/", async (req, res) => {
       phone,
       course,
       university,
+      qualification: selectedQualification?._id || null, // ✅ save ID
       message,
       status: "New",
     });
@@ -66,19 +77,18 @@ router.post("/", async (req, res) => {
   }
 });
 
-
 // ==========================================
 // ADMIN: GET ALL ENQUIRIES (FILTER SUPPORT)
 // ==========================================
 router.get("/", protect, protectAdmin, async (req, res) => {
   try {
     const { status } = req.query;
-
     const filter = status ? { status } : {};
 
     const enquiries = await Enquiry.find(filter)
       .populate("course", "course_name")
       .populate("university", "name bitlink")
+      .populate("qualification", "name") // ✅ populate qualification
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -96,7 +106,6 @@ router.get("/", protect, protectAdmin, async (req, res) => {
   }
 });
 
-
 // ==========================================
 // ADMIN: GET SINGLE ENQUIRY
 // ==========================================
@@ -104,7 +113,8 @@ router.get("/:id", protect, protectAdmin, async (req, res) => {
   try {
     const enquiry = await Enquiry.findById(req.params.id)
       .populate("course", "course_name")
-      .populate("university", "name bitlink");
+      .populate("university", "name bitlink")
+      .populate("qualification", "name"); // ✅ populate qualification
 
     if (!enquiry) {
       return res.status(404).json({
@@ -127,26 +137,15 @@ router.get("/:id", protect, protectAdmin, async (req, res) => {
   }
 });
 
-
 // ==========================================
 // ADMIN: UPDATE STATUS
 // ==========================================
 router.put("/:id/status", protect, protectAdmin, async (req, res) => {
   try {
     const { status } = req.body;
-
-    const allowedStatus = [
-      "New",
-      "Contacted",
-      "Converted",
-      "Rejected",
-    ];
-
+    const allowedStatus = ["New", "Contacted", "Converted", "Rejected"];
     if (!allowedStatus.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid status value",
-      });
+      return res.status(400).json({ success: false, message: "Invalid status value" });
     }
 
     const enquiry = await Enquiry.findByIdAndUpdate(
@@ -155,13 +154,11 @@ router.put("/:id/status", protect, protectAdmin, async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate("course", "course_name")
-      .populate("university", "name bitlink");
+      .populate("university", "name bitlink")
+      .populate("qualification", "name"); // ✅ populate qualification
 
     if (!enquiry) {
-      return res.status(404).json({
-        success: false,
-        message: "Enquiry not found",
-      });
+      return res.status(404).json({ success: false, message: "Enquiry not found" });
     }
 
     res.status(200).json({
@@ -172,13 +169,9 @@ router.put("/:id/status", protect, protectAdmin, async (req, res) => {
 
   } catch (error) {
     console.error("Update Status Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 });
-
 
 // ==========================================
 // ADMIN: UPDATE REMARKS
@@ -193,13 +186,11 @@ router.put("/:id/remarks", protect, protectAdmin, async (req, res) => {
       { new: true }
     )
       .populate("course", "course_name")
-      .populate("university", "name bitlink");
+      .populate("university", "name bitlink")
+      .populate("qualification", "name"); // ✅ populate qualification
 
     if (!enquiry) {
-      return res.status(404).json({
-        success: false,
-        message: "Enquiry not found",
-      });
+      return res.status(404).json({ success: false, message: "Enquiry not found" });
     }
 
     res.status(200).json({
@@ -210,13 +201,9 @@ router.put("/:id/remarks", protect, protectAdmin, async (req, res) => {
 
   } catch (error) {
     console.error("Update Remarks Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 });
-
 
 // ==========================================
 // ADMIN: DELETE ENQUIRY
@@ -226,10 +213,7 @@ router.delete("/:id", protect, protectAdmin, async (req, res) => {
     const enquiry = await Enquiry.findByIdAndDelete(req.params.id);
 
     if (!enquiry) {
-      return res.status(404).json({
-        success: false,
-        message: "Enquiry not found",
-      });
+      return res.status(404).json({ success: false, message: "Enquiry not found" });
     }
 
     res.status(200).json({
@@ -239,10 +223,7 @@ router.delete("/:id", protect, protectAdmin, async (req, res) => {
 
   } catch (error) {
     console.error("Delete Enquiry Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server Error",
-    });
+    res.status(500).json({ success: false, message: "Server Error" });
   }
 });
 

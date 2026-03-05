@@ -14,6 +14,12 @@ const enquirySchema = new mongoose.Schema(
       required: false,
     },
 
+    qualification: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Qualification",
+      required: false,
+    },
+
     learningMode: {
       type: String,
       enum: ["online", "offline", "distance"],
