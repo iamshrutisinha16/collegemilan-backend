@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Enquiry = require("../models/Enquiry");
-const University = require("../models/University"); // ✅ university model
+const University = require("../models/University"); 
+const Qualification = require("../models/Qualification");
 
 // Submit form
 router.post("/", async (req, res) => {
@@ -64,7 +65,16 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get all enquiries (admin)
+// Submit form 
+router.post("/", async (req, res) => {
+   try { const enquiry = new Enquiry(req.body); 
+    await enquiry.save();
+     res.json({ message: "Enquiry submitted successfully" }); 
+    } catch (err) { 
+      res.status(500).json({ error: err.message }); 
+    } });
+
+  // Get all enquiries (admin)
 router.get("/", async (req, res) => {
   try {
     const enquiries = await Enquiry.find().sort({ createdAt: -1 });
