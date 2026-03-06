@@ -33,9 +33,6 @@ app.get("/", (req, res) => {
   res.send("Backend is running successfully");
 });
 
-
-// ================= PAYMENT ROUTES =================
-
 // 1️⃣ Create Order
 app.post("/api/create-order", async (req, res) => {
   try {
@@ -117,7 +114,9 @@ app.use("/api/admin/universities", require("./routes/adminUniversitiesRoutes"));
 app.use("/api/admin/settings", require("./routes/adminSettingRoutes"));
 app.use("/api/admin/events", require("./routes/events"));
 app.use("/api/admin/careers", require("./routes/adminCareerRoutes"));
+app.use("/api/admin/home", require("./routes/adminHomeRoutes"));
 
+app.use("/uploads",express.static("uploads"));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
