@@ -1,66 +1,73 @@
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
+const Page = require("../models/AdminHome");
 
-const Page = require("../models/AdminHome")
 
-
-// =============================
+// =======================
 // GET HOME PAGE DATA
-// =============================
+// =======================
 
-router.get("/home-page", async (req,res)=>{
+router.get("/home-page", async (req, res) => {
 
- try{
+  try {
 
-   const homeData = await Page.findOne({pageName:"home"})
+    let homeData = await Page.findOne({ pageName: "home" });
 
-   res.json(homeData)
+    if (!homeData) {
 
- }catch(error){
+      homeData = new Page({
+        pageName: "home"
+      });
 
-   res.status(500).json({
-     message:"Error fetching home page",
-     error
-   })
+      await homeData.save();
+    }
 
- }
+    res.json(homeData);
 
-})
+  } catch (err) {
+
+    res.status(500).json({
+      message: "Error fetching home page",
+      error: err.message
+    });
+
+  }
+
+});
 
 
-
-// =============================
+// =======================
 // UPDATE HOME PAGE DATA
-// =============================
+// =======================
 
-router.put("/home-page", async (req,res)=>{
+router.put("/home-page", async (req, res) => {
 
- try{
+  try {
 
-   const updatedHome = await Page.findOneAndUpdate(
+    const updatedHome = await Page.findOneAndUpdate(
+      { pageName: "home" },
+      req.body,
+      {
+        new: true,
+        upsert: true
+      }
+    );
 
-     {pageName:"home"},
-     req.body,
-     {new:true}
+    res.json({
+      message: "Home Page Updated Successfully",
+      data: updatedHome
+    });
 
-   )
+  } catch (err) {
 
-   res.json({
-     message:"Home Page Updated Successfully",
-     data:updatedHome
-   })
+    res.status(500).json({
+      message: "Error updating home page",
+      error: err.message
+    });
 
- }catch(error){
+  }
 
-   res.status(500).json({
-     message:"Error updating home page",
-     error
-   })
-
- }
-
-})
+});
 
 
-
-module.exports = router
+module.exports = router;
