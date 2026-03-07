@@ -7,7 +7,7 @@ const Page = require("../models/AdminHome");
 // GET HOME PAGE DATA
 // =======================
 
-router.get("/home-page", async (req, res) => {
+router.get("/", async (req, res) => {
 
   try {
 
@@ -40,7 +40,7 @@ router.get("/home-page", async (req, res) => {
 // UPDATE HOME PAGE DATA
 // =======================
 
-router.put("/home-page", async (req, res) => {
+router.put("/", async (req, res) => {
 
   try {
 
