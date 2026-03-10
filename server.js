@@ -91,9 +91,6 @@ app.post("/api/verify-payment", async (req, res) => {
   }
 });
 
-
-// ================= NORMAL ROUTES =================
-
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/careers', require('./routes/careerRoutes'));
 app.use('/api/contact', require('./routes/contactRoutes'));
@@ -115,6 +112,7 @@ app.use("/api/admin/settings", require("./routes/adminSettingRoutes"));
 app.use("/api/admin/events", require("./routes/events"));
 app.use("/api/admin/careers", require("./routes/adminCareerRoutes"));
 app.use("/api/admin/home", require("./routes/adminHomeRoutes"));
+app.use("/api/admin/about", require("./routes/adminAboutRoutes"));
 
 app.use("/uploads",express.static("uploads"));
 
