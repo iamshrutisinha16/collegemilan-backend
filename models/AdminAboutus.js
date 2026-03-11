@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const aboutSchema = new mongoose.Schema({
   bannerImage: String,
@@ -37,7 +37,9 @@ const aboutSchema = new mongoose.Schema({
       desc: String,
       icon: String
     }
-  ]
+  ],
+   ctaTitle: { type: String, default: "" },
+   ctaDesc: { type: String, default: "" }
 });
 
-export default mongoose.model("AboutUs", aboutSchema);
+module.exports = mongoose.model("AboutUs", aboutSchema);
