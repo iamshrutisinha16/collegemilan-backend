@@ -58,26 +58,26 @@ router.put("/", async (req, res) => {
     console.log("BODY:", req.body);
 
     // remove fields that should not update
-    const { _id, pageName, ...updateData } = req.body;
+    const { _id, __v, pageName, ...updateData } = req.body;
 
     const updatedHome = await Page.findOneAndUpdate(
       { pageName: "home" },
-      { $set: updateData },
+      updateData,
       {
-        returnDocument: "after",   // replaces deprecated new:true
+        returnDocument: "after",
         runValidators: true,
         upsert: true
       }
     );
 
-    res.json({
+    res.status(200).json({
       message: "Home Page Updated Successfully",
       data: updatedHome
     });
 
   } catch (err) {
 
-    console.log("HOME UPDATE ERROR:", err);
+    console.error("HOME UPDATE ERROR:", err);
 
     res.status(500).json({
       message: "Update Error",
@@ -86,7 +86,6 @@ router.put("/", async (req, res) => {
 
   }
 });
-
 
 /*
 =====================================
