@@ -111,8 +111,9 @@ app.use("/api/admin/universities", require("./routes/adminUniversitiesRoutes"));
 app.use("/api/admin/settings", require("./routes/adminSettingRoutes"));
 app.use("/api/admin/events", require("./routes/events"));
 app.use("/api/admin/careers", require("./routes/adminCareerRoutes"));
-app.use("/api/admin/home", require("./routes/adminHomeRoutes"));
-app.use("/api/admin/about", require("./routes/adminAboutRoutes"));
+app.use("/api/admin", require("./routes/adminHomeRoutes"));
+app.use("/api/admin", require("./routes/adminAboutRoutes"));
+app.use("/api/admin", require("./routes/adminPlacement"));
 
 app.use("/uploads",express.static("uploads"));
 
