@@ -3,12 +3,19 @@ const router = express.Router();
 
 const Page = require("../models/AdminHome");
 
-router.get("/home", async (req, res) => {
+/*
+=====================================
+GET HOME PAGE
+=====================================
+*/
+router.get("/", async (req, res) => {
   try {
+
     let homeData = await Page.findOne({ pageName: "home" });
 
     // if data not exist, create default document
     if (!homeData) {
+
       homeData = new Page({
         pageName: "home",
         heroSection: { title: "", description: "", buttonText: "", heroImage: "" },
@@ -24,56 +31,67 @@ router.get("/home", async (req, res) => {
       });
 
       await homeData.save();
+
     }
 
     res.status(200).json(homeData);
+
   } catch (err) {
-    console.error("GET /home error:", err);
-    res.status(500).json({ message: "Error fetching home page", error: err.message });
+
+    console.error("GET / error:", err);
+
+    res.status(500).json({
+      message: "Error fetching home page",
+      error: err.message
+    });
+
   }
 });
+
 
 /*
 =====================================
 UPDATE FULL HOME PAGE
 =====================================
 */
-router.put("/home", async (req, res) => {
+router.put("/", async (req, res) => {
   try {
 
-    console.log("BODY:", req.body)
+    console.log("BODY:", req.body);
 
-    const updateData = { ...req.body }
+    const updateData = { ...req.body };
 
     // remove fields that should not update
-    delete updateData._id
-    delete updateData.pageName
+    delete updateData._id;
+    delete updateData.pageName;
 
     const updatedHome = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $set: updateData },
       {
         new: true,
-        runValidators: true
+        runValidators: true,
+        upsert: true   // create document if not exists
       }
-    )
+    );
 
     res.json({
       message: "Home Page Updated Successfully",
       data: updatedHome
-    })
+    });
 
   } catch (err) {
 
-    console.log("ERROR:", err)
+    console.log("ERROR:", err);
 
     res.status(500).json({
       message: "Update Error",
       error: err.message
-    })
+    });
 
   }
-})
+});
+
 
 /*
 =====================================
@@ -81,21 +99,34 @@ UPDATE SINGLE SECTION
 (optional CMS feature)
 =====================================
 */
-router.patch("/home/:section", async (req, res) => {
+router.patch("/:section", async (req, res) => {
   try {
+
     const section = req.params.section;
+
     const updated = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $set: { [section]: req.body } },
       { new: true, runValidators: true }
     );
 
-    res.json({ message: `${section} updated`, data: updated });
+    res.json({
+      message: `${section} updated`,
+      data: updated
+    });
+
   } catch (err) {
-    console.error("PATCH /home/:section error:", err);
-    res.status(500).json({ message: "Section update error", error: err.message });
+
+    console.error("PATCH /:section error:", err);
+
+    res.status(500).json({
+      message: "Section update error",
+      error: err.message
+    });
+
   }
 });
+
 
 /*
 =====================================
@@ -103,43 +134,74 @@ ADD ITEM TO ARRAY SECTIONS
 (features, services, blogs, stats)
 =====================================
 */
-router.post("/home/:section", async (req, res) => {
+router.post("/:section", async (req, res) => {
   try {
+
     const section = req.params.section;
+
     const updated = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $push: { [section]: req.body } },
       { new: true, runValidators: true }
     );
 
-    res.json({ message: `Item added to ${section}`, data: updated });
+    res.json({
+      message: `Item added to ${section}`,
+      data: updated
+    });
+
   } catch (err) {
-    console.error("POST /home/:section error:", err);
-    res.status(500).json({ message: "Error adding item", error: err.message });
+
+    console.error("POST /:section error:", err);
+
+    res.status(500).json({
+      message: "Error adding item",
+      error: err.message
+    });
+
   }
 });
+
 
 /*
 =====================================
 DELETE ARRAY ITEM
 =====================================
 */
-router.delete("/home/:section/:index", async (req, res) => {
+router.delete("/:section/:index", async (req, res) => {
   try {
+
     const { section, index } = req.params;
+
     let page = await Page.findOne({ pageName: "home" });
 
     if (!page || !page[section]) {
-      return res.status(400).json({ message: "Section not found" });
+      return res.status(400).json({
+        message: "Section not found"
+      });
     }
 
-    page[section].splice(index, 1);
+    // ensure index is number
+    const idx = parseInt(index);
+
+    page[section].splice(idx, 1);
+
     await page.save();
 
-    res.json({ message: "Item deleted", data: page });
+    res.json({
+      message: "Item deleted",
+      data: page
+    });
+
   } catch (err) {
-    console.error("DELETE /home/:section/:index error:", err);
-    res.status(500).json({ message: "Delete error", error: err.message });
+
+    console.error("DELETE /:section/:index error:", err);
+
+    res.status(500).json({
+      message: "Delete error",
+      error: err.message
+    });
+
   }
 });
 
