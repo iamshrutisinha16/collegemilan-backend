@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
     // if data not exist, create default document
     if (!homeData) {
 
-      homeData = new Page({
+      homeData = await Page.create({
         pageName: "home",
         heroSection: { title: "", description: "", buttonText: "", heroImage: "" },
         featuresSection: [],
@@ -30,15 +30,13 @@ router.get("/", async (req, res) => {
         metaDescription: ""
       });
 
-      await homeData.save();
-
     }
 
     res.status(200).json(homeData);
 
   } catch (err) {
 
-    console.error("GET / error:", err);
+    console.error("GET HOME ERROR:", err);
 
     res.status(500).json({
       message: "Error fetching home page",
@@ -59,19 +57,16 @@ router.put("/", async (req, res) => {
 
     console.log("BODY:", req.body);
 
-    const updateData = { ...req.body };
-
     // remove fields that should not update
-    delete updateData._id;
-    delete updateData.pageName;
+    const { _id, pageName, ...updateData } = req.body;
 
     const updatedHome = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $set: updateData },
       {
-        new: true,
+        returnDocument: "after",   // replaces deprecated new:true
         runValidators: true,
-        upsert: true   // create document if not exists
+        upsert: true
       }
     );
 
@@ -82,7 +77,7 @@ router.put("/", async (req, res) => {
 
   } catch (err) {
 
-    console.log("ERROR:", err);
+    console.log("HOME UPDATE ERROR:", err);
 
     res.status(500).json({
       message: "Update Error",
@@ -107,7 +102,11 @@ router.patch("/:section", async (req, res) => {
     const updated = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $set: { [section]: req.body } },
-      { new: true, runValidators: true }
+      {
+        returnDocument: "after",
+        runValidators: true,
+        upsert: true
+      }
     );
 
     res.json({
@@ -117,7 +116,7 @@ router.patch("/:section", async (req, res) => {
 
   } catch (err) {
 
-    console.error("PATCH /:section error:", err);
+    console.error("PATCH /:section ERROR:", err);
 
     res.status(500).json({
       message: "Section update error",
@@ -142,7 +141,11 @@ router.post("/:section", async (req, res) => {
     const updated = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $push: { [section]: req.body } },
-      { new: true, runValidators: true }
+      {
+        returnDocument: "after",
+        runValidators: true,
+        upsert: true
+      }
     );
 
     res.json({
@@ -152,7 +155,7 @@ router.post("/:section", async (req, res) => {
 
   } catch (err) {
 
-    console.error("POST /:section error:", err);
+    console.error("POST /:section ERROR:", err);
 
     res.status(500).json({
       message: "Error adding item",
@@ -181,8 +184,13 @@ router.delete("/:section/:index", async (req, res) => {
       });
     }
 
-    // ensure index is number
     const idx = parseInt(index);
+
+    if (isNaN(idx)) {
+      return res.status(400).json({
+        message: "Invalid index"
+      });
+    }
 
     page[section].splice(idx, 1);
 
@@ -195,7 +203,7 @@ router.delete("/:section/:index", async (req, res) => {
 
   } catch (err) {
 
-    console.error("DELETE /:section/:index error:", err);
+    console.error("DELETE /:section/:index ERROR:", err);
 
     res.status(500).json({
       message: "Delete error",
