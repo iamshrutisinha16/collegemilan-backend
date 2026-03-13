@@ -4,7 +4,7 @@ const AboutUs = require("../models/AdminAboutus");
 const router = express.Router();
 
 // GET about content
-router.get("/", async (req, res) => {
+router.get("/about", async (req, res) => {
   try {
     const data = await AboutUs.findOne();
     res.json(data);
@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
 });
 
 // UPDATE about content
-router.put("/", async (req, res) => {
+router.put("/about", async (req, res) => {
   try {
     const updated = await AboutUs.findOneAndUpdate(
       {},

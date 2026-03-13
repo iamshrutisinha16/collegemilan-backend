@@ -3,12 +3,7 @@ const router = express.Router();
 
 const Page = require("../models/AdminHome");
 
-/*
-=====================================
-GET HOME PAGE DATA
-=====================================
-*/
-router.get("/home-page", async (req, res) => {
+router.get("/home", async (req, res) => {
   try {
     let homeData = await Page.findOne({ pageName: "home" });
 
@@ -33,7 +28,7 @@ router.get("/home-page", async (req, res) => {
 
     res.status(200).json(homeData);
   } catch (err) {
-    console.error("GET /home-page error:", err);
+    console.error("GET /home error:", err);
     res.status(500).json({ message: "Error fetching home page", error: err.message });
   }
 });
@@ -43,7 +38,7 @@ router.get("/home-page", async (req, res) => {
 UPDATE FULL HOME PAGE
 =====================================
 */
-router.put("/home-page", async (req, res) => {
+router.put("/home", async (req, res) => {
   try {
 
     console.log("BODY:", req.body)
@@ -86,7 +81,7 @@ UPDATE SINGLE SECTION
 (optional CMS feature)
 =====================================
 */
-router.patch("/home-page/:section", async (req, res) => {
+router.patch("/home/:section", async (req, res) => {
   try {
     const section = req.params.section;
     const updated = await Page.findOneAndUpdate(
@@ -97,7 +92,7 @@ router.patch("/home-page/:section", async (req, res) => {
 
     res.json({ message: `${section} updated`, data: updated });
   } catch (err) {
-    console.error("PATCH /home-page/:section error:", err);
+    console.error("PATCH /home/:section error:", err);
     res.status(500).json({ message: "Section update error", error: err.message });
   }
 });
@@ -108,7 +103,7 @@ ADD ITEM TO ARRAY SECTIONS
 (features, services, blogs, stats)
 =====================================
 */
-router.post("/home-page/:section", async (req, res) => {
+router.post("/home/:section", async (req, res) => {
   try {
     const section = req.params.section;
     const updated = await Page.findOneAndUpdate(
@@ -119,7 +114,7 @@ router.post("/home-page/:section", async (req, res) => {
 
     res.json({ message: `Item added to ${section}`, data: updated });
   } catch (err) {
-    console.error("POST /home-page/:section error:", err);
+    console.error("POST /home/:section error:", err);
     res.status(500).json({ message: "Error adding item", error: err.message });
   }
 });
@@ -129,7 +124,7 @@ router.post("/home-page/:section", async (req, res) => {
 DELETE ARRAY ITEM
 =====================================
 */
-router.delete("/home-page/:section/:index", async (req, res) => {
+router.delete("/home/:section/:index", async (req, res) => {
   try {
     const { section, index } = req.params;
     let page = await Page.findOne({ pageName: "home" });
@@ -143,7 +138,7 @@ router.delete("/home-page/:section/:index", async (req, res) => {
 
     res.json({ message: "Item deleted", data: page });
   } catch (err) {
-    console.error("DELETE /home-page/:section/:index error:", err);
+    console.error("DELETE /home/:section/:index error:", err);
     res.status(500).json({ message: "Delete error", error: err.message });
   }
 });
