@@ -1,282 +1,151 @@
 const express = require("express");
 const router = express.Router();
-
 const Page = require("../models/AdminHome");
 
-
-/*
-=====================================
-GET HOME PAGE
-=====================================
-*/
 router.get("/", async (req, res) => {
-  try {
+ try {
 
-    let homeData = await Page.findOne({ pageName: "home" });
+  let homeData = await Page.findOne({ pageName: "home" });
 
-    // Create default page if not exist
-    if (!homeData) {
+  if (!homeData) {
 
-      homeData = await Page.create({
-        pageName: "home"
-      });
-
-    }
-
-    res.status(200).json(homeData);
-
-  } catch (err) {
-
-    console.error("GET HOME ERROR:", err);
-
-    res.status(500).json({
-      message: "Error fetching home page",
-      error: err.message
-    });
+   homeData = await Page.create({
+    pageName: "home",
+    heroSection: {},
+    featuresSection: [],
+    founderSection: {},
+    videoSection: {},
+    servicesSection: [],
+    statsSection: [],
+    blogSection: [],
+    testimonialSection: {},
+    metaTitle: "",
+    metaDescription: ""
+   });
 
   }
+
+  res.json(homeData);
+
+ } catch (err) {
+
+  console.error(err);
+  res.status(500).json(err);
+
+ }
 });
 
-
-
-/*
-=====================================
-UPDATE FULL HOME PAGE
-=====================================
-*/
 router.put("/", async (req, res) => {
 
-  try {
+ try {
 
-    console.log("BODY:", req.body);
+  const updateData = req.body;
 
-    // Remove restricted fields
-    const { _id, __v, pageName, ...updateData } = req.body;
+  const updatedHome = await Page.findOneAndUpdate(
 
-    const updatedHome = await Page.findOneAndUpdate(
+   { pageName: "home" },
 
-      { pageName: "home" },
+   {
+    ...updateData,
+    pageName: "home"
+   },
 
-      { $set: updateData },
+   {
+    new: true,
+    runValidators: true,
+    upsert: true
+   }
 
-      {
-        new: true,
-        runValidators: true,
-        upsert: true
-      }
+  );
 
-    );
+  res.json(updatedHome);
 
-    res.status(200).json({
-      message: "Home Page Updated Successfully",
-      data: updatedHome
-    });
+ } catch (err) {
 
-  } catch (err) {
+  console.error(err);
+  res.status(500).json(err);
 
-    console.error("HOME UPDATE ERROR:", err);
-
-    res.status(500).json({
-      message: "Update Error",
-      error: err.message
-    });
-
-  }
+ }
 
 });
 
-
-
-/*
-=====================================
-UPDATE SINGLE SECTION
-=====================================
-*/
 router.patch("/:section", async (req, res) => {
 
-  try {
+ try {
 
-    const section = req.params.section;
+  const section = req.params.section;
 
-    const allowedSections = [
-      "heroSection",
-      "featuresSection",
-      "founderSection",
-      "videoSection",
-      "servicesSection",
-      "statsSection",
-      "blogSection",
-      "testimonialSection",
-      "metaTitle",
-      "metaDescription"
-    ];
+  const updated = await Page.findOneAndUpdate(
 
-    if (!allowedSections.includes(section)) {
-      return res.status(400).json({
-        message: "Invalid section name"
-      });
-    }
+   { pageName: "home" },
 
-    const updated = await Page.findOneAndUpdate(
+   { $set: { [section]: req.body } },
 
-      { pageName: "home" },
+   { new: true }
 
-      { $set: { [section]: req.body } },
+  );
 
-      {
-        new: true,
-        runValidators: true,
-        upsert: true
-      }
+  res.json(updated);
 
-    );
+ } catch (err) {
 
-    res.json({
-      message: `${section} updated successfully`,
-      data: updated
-    });
+  console.error(err);
+  res.status(500).json(err);
 
-  } catch (err) {
-
-    console.error("PATCH /:section ERROR:", err);
-
-    res.status(500).json({
-      message: "Section update error",
-      error: err.message
-    });
-
-  }
+ }
 
 });
 
-
-
-/*
-=====================================
-ADD ITEM TO ARRAY SECTIONS
-=====================================
-*/
 router.post("/:section", async (req, res) => {
 
-  try {
+ try {
 
-    const section = req.params.section;
+  const section = req.params.section;
 
-    const allowedArrays = [
-      "featuresSection",
-      "servicesSection",
-      "statsSection",
-      "blogSection"
-    ];
+  const updated = await Page.findOneAndUpdate(
 
-    if (!allowedArrays.includes(section)) {
-      return res.status(400).json({
-        message: "Invalid section"
-      });
-    }
+   { pageName: "home" },
 
-    const updated = await Page.findOneAndUpdate(
+   { $push: { [section]: req.body } },
 
-      { pageName: "home" },
+   { new: true }
 
-      { $push: { [section]: req.body } },
+  );
 
-      {
-        new: true,
-        runValidators: true,
-        upsert: true
-      }
+  res.json(updated);
 
-    );
+ } catch (err) {
 
-    res.json({
-      message: `Item added to ${section}`,
-      data: updated
-    });
+  console.error(err);
+  res.status(500).json(err);
 
-  } catch (err) {
-
-    console.error("POST /:section ERROR:", err);
-
-    res.status(500).json({
-      message: "Error adding item",
-      error: err.message
-    });
-
-  }
+ }
 
 });
 
-
-
-/*
-=====================================
-DELETE ARRAY ITEM
-=====================================
-*/
 router.delete("/:section/:index", async (req, res) => {
 
-  try {
+ try {
 
-    const { section, index } = req.params;
+  const { section, index } = req.params;
 
-    const allowedArrays = [
-      "featuresSection",
-      "servicesSection",
-      "statsSection",
-      "blogSection"
-    ];
+  const page = await Page.findOne({ pageName: "home" });
 
-    if (!allowedArrays.includes(section)) {
-      return res.status(400).json({
-        message: "Invalid section"
-      });
-    }
+  if (!page) return res.status(404).json({message:"Page not found"});
 
-    const page = await Page.findOne({ pageName: "home" });
+  page[section].splice(index,1);
 
-    if (!page) {
-      return res.status(404).json({
-        message: "Page not found"
-      });
-    }
+  await page.save();
 
-    const idx = parseInt(index);
+  res.json(page);
 
-    if (isNaN(idx)) {
-      return res.status(400).json({
-        message: "Invalid index"
-      });
-    }
+ } catch (err) {
 
-    if (!page[section] || page[section].length <= idx) {
-      return res.status(400).json({
-        message: "Item not found"
-      });
-    }
+  console.error(err);
+  res.status(500).json(err);
 
-    page[section].splice(idx, 1);
-
-    await page.save();
-
-    res.json({
-      message: "Item deleted successfully",
-      data: page
-    });
-
-  } catch (err) {
-
-    console.error("DELETE ERROR:", err);
-
-    res.status(500).json({
-      message: "Delete error",
-      error: err.message
-    });
-
-  }
+ }
 
 });
-
-
 
 module.exports = router;
