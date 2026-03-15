@@ -3,6 +3,7 @@ const router = express.Router();
 
 const Page = require("../models/AdminHome");
 
+
 /*
 =====================================
 GET HOME PAGE
@@ -13,21 +14,11 @@ router.get("/", async (req, res) => {
 
     let homeData = await Page.findOne({ pageName: "home" });
 
-    // if data not exist, create default document
+    // Create default page if not exist
     if (!homeData) {
 
       homeData = await Page.create({
-        pageName: "home",
-        heroSection: { title: "", description: "", buttonText: "", heroImage: "" },
-        featuresSection: [],
-        founderSection: { since: "", title: "", description: "", founderName: "", image: "" },
-        videoSection: { title: "", videoUrl: "" },
-        servicesSection: [],
-        statsSection: [],
-        blogSection: [],
-        testimonialSection: { quote: "", name: "", role: "" },
-        metaTitle: "",
-        metaDescription: ""
+        pageName: "home"
       });
 
     }
@@ -47,27 +38,33 @@ router.get("/", async (req, res) => {
 });
 
 
+
 /*
 =====================================
 UPDATE FULL HOME PAGE
 =====================================
 */
 router.put("/", async (req, res) => {
+
   try {
 
     console.log("BODY:", req.body);
 
-    // remove fields that should not update
+    // Remove restricted fields
     const { _id, __v, pageName, ...updateData } = req.body;
 
     const updatedHome = await Page.findOneAndUpdate(
+
       { pageName: "home" },
-      updateData,
+
+      { $set: updateData },
+
       {
-        returnDocument: "after",
+        new: true,
         runValidators: true,
         upsert: true
       }
+
     );
 
     res.status(200).json({
@@ -85,31 +82,57 @@ router.put("/", async (req, res) => {
     });
 
   }
+
 });
+
+
 
 /*
 =====================================
 UPDATE SINGLE SECTION
-(optional CMS feature)
 =====================================
 */
 router.patch("/:section", async (req, res) => {
+
   try {
 
     const section = req.params.section;
 
+    const allowedSections = [
+      "heroSection",
+      "featuresSection",
+      "founderSection",
+      "videoSection",
+      "servicesSection",
+      "statsSection",
+      "blogSection",
+      "testimonialSection",
+      "metaTitle",
+      "metaDescription"
+    ];
+
+    if (!allowedSections.includes(section)) {
+      return res.status(400).json({
+        message: "Invalid section name"
+      });
+    }
+
     const updated = await Page.findOneAndUpdate(
+
       { pageName: "home" },
+
       { $set: { [section]: req.body } },
+
       {
-        returnDocument: "after",
+        new: true,
         runValidators: true,
         upsert: true
       }
+
     );
 
     res.json({
-      message: `${section} updated`,
+      message: `${section} updated successfully`,
       data: updated
     });
 
@@ -123,28 +146,47 @@ router.patch("/:section", async (req, res) => {
     });
 
   }
+
 });
+
 
 
 /*
 =====================================
 ADD ITEM TO ARRAY SECTIONS
-(features, services, blogs, stats)
 =====================================
 */
 router.post("/:section", async (req, res) => {
+
   try {
 
     const section = req.params.section;
 
+    const allowedArrays = [
+      "featuresSection",
+      "servicesSection",
+      "statsSection",
+      "blogSection"
+    ];
+
+    if (!allowedArrays.includes(section)) {
+      return res.status(400).json({
+        message: "Invalid section"
+      });
+    }
+
     const updated = await Page.findOneAndUpdate(
+
       { pageName: "home" },
+
       { $push: { [section]: req.body } },
+
       {
-        returnDocument: "after",
+        new: true,
         runValidators: true,
         upsert: true
       }
+
     );
 
     res.json({
@@ -162,7 +204,9 @@ router.post("/:section", async (req, res) => {
     });
 
   }
+
 });
+
 
 
 /*
@@ -171,15 +215,29 @@ DELETE ARRAY ITEM
 =====================================
 */
 router.delete("/:section/:index", async (req, res) => {
+
   try {
 
     const { section, index } = req.params;
 
-    let page = await Page.findOne({ pageName: "home" });
+    const allowedArrays = [
+      "featuresSection",
+      "servicesSection",
+      "statsSection",
+      "blogSection"
+    ];
 
-    if (!page || !page[section]) {
+    if (!allowedArrays.includes(section)) {
       return res.status(400).json({
-        message: "Section not found"
+        message: "Invalid section"
+      });
+    }
+
+    const page = await Page.findOne({ pageName: "home" });
+
+    if (!page) {
+      return res.status(404).json({
+        message: "Page not found"
       });
     }
 
@@ -191,18 +249,24 @@ router.delete("/:section/:index", async (req, res) => {
       });
     }
 
+    if (!page[section] || page[section].length <= idx) {
+      return res.status(400).json({
+        message: "Item not found"
+      });
+    }
+
     page[section].splice(idx, 1);
 
     await page.save();
 
     res.json({
-      message: "Item deleted",
+      message: "Item deleted successfully",
       data: page
     });
 
   } catch (err) {
 
-    console.error("DELETE /:section/:index ERROR:", err);
+    console.error("DELETE ERROR:", err);
 
     res.status(500).json({
       message: "Delete error",
@@ -210,6 +274,9 @@ router.delete("/:section/:index", async (req, res) => {
     });
 
   }
+
 });
+
+
 
 module.exports = router;

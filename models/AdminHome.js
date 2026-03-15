@@ -1,43 +1,154 @@
 const mongoose = require("mongoose")
 
-const AdminHomeSchema = new mongoose.Schema({
-
-hero:{
- title:String,
- description:String,
- button:String
-},
-
-about:{
- title:String,
- description:String
-},
-
-video:{
- title:String,
- url:String
-},
-
-stats:{
- students:String,
- workshops:String,
- years:String,
- impact:String
-},
-
-testimonial:{
- name:String,
- course:String,
- review:String
-},
-
-blogs:[
-{
- category:String,
- title:String
-}
-]
-
+const featureSchema = new mongoose.Schema({
+  title:{
+    type:String,
+    default:""
+  },
+  description:{
+    type:String,
+    default:""
+  },
+  icon:{
+    type:String,
+    default:""
+  }
 })
 
-module.exports = mongoose.model("AdminHome", AdminHomeSchema)
+
+const serviceSchema = new mongoose.Schema({
+  title:{
+    type:String,
+    default:""
+  },
+  description:{
+    type:String,
+    default:""
+  }
+})
+
+
+const statSchema = new mongoose.Schema({
+  number:{
+    type:String,
+    default:""
+  },
+  title:{
+    type:String,
+    default:""
+  }
+})
+
+const blogSchema = new mongoose.Schema({
+  title:{
+    type:String,
+    default:""
+  },
+  category:{
+    type:String,
+    default:""
+  },
+  image:{
+    type:String,
+    default:""
+  }
+})
+
+const pageSchema = new mongoose.Schema({
+
+  pageName:{
+    type:String,
+    required:true,
+    default:"home",
+    unique:true
+  },
+
+  heroSection:{
+    title:{
+      type:String,
+      default:""
+    },
+    description:{
+      type:String,
+      default:""
+    },
+    buttonText:{
+      type:String,
+      default:""
+    },
+    heroImage:{
+      type:String,
+      default:""
+    }
+  },
+
+  featuresSection:[featureSchema],
+
+  founderSection:{
+    since:{
+      type:String,
+      default:""
+    },
+    title:{
+      type:String,
+      default:""
+    },
+    description:{
+      type:String,
+      default:""
+    },
+    founderName:{
+      type:String,
+      default:""
+    },
+    image:{
+      type:String,
+      default:""
+    }
+  },
+
+  videoSection:{
+    title:{
+      type:String,
+      default:""
+    },
+    videoUrl:{
+      type:String,
+      default:""
+    }
+  },
+
+  servicesSection:[serviceSchema],
+  statsSection:[statSchema],
+  blogSection:[blogSchema],
+  testimonialSection:{
+    quote:{
+      type:String,
+      default:""
+    },
+    name:{
+      type:String,
+      default:""
+    },
+    role:{
+      type:String,
+      default:""
+    }
+  },
+
+  metaTitle:{
+    type:String,
+    default:""
+  },
+
+  metaDescription:{
+    type:String,
+    default:""
+  }
+
+},
+{
+  timestamps:true
+})
+
+module.exports = mongoose.model("Page",pageSchema)
