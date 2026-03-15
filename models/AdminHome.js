@@ -1,154 +1,70 @@
 const mongoose = require("mongoose")
 
 const featureSchema = new mongoose.Schema({
-  title:{
-    type:String,
-    default:""
-  },
-  description:{
-    type:String,
-    default:""
-  },
-  icon:{
-    type:String,
-    default:""
-  }
+ title:String,
+ description:String,
 })
-
 
 const serviceSchema = new mongoose.Schema({
-  title:{
-    type:String,
-    default:""
-  },
-  description:{
-    type:String,
-    default:""
-  }
+ title:String,
+ description:String
 })
 
-
 const statSchema = new mongoose.Schema({
-  number:{
-    type:String,
-    default:""
-  },
-  title:{
-    type:String,
-    default:""
-  }
+ number:String,
+ title:String
 })
 
 const blogSchema = new mongoose.Schema({
-  title:{
-    type:String,
-    default:""
-  },
-  category:{
-    type:String,
-    default:""
-  },
-  image:{
-    type:String,
-    default:""
-  }
+ title:String,
+ category:String,
+ image:String
 })
 
 const pageSchema = new mongoose.Schema({
 
-  pageName:{
-    type:String,
-    required:true,
-    default:"home",
-    unique:true
-  },
+ pageName:{
+  type:String,
+  required:true
+ },
 
-  heroSection:{
-    title:{
-      type:String,
-      default:""
-    },
-    description:{
-      type:String,
-      default:""
-    },
-    buttonText:{
-      type:String,
-      default:""
-    },
-    heroImage:{
-      type:String,
-      default:""
-    }
-  },
+ heroSection:{
+  title:String,
+  description:String,
+  buttonText:String,
+  heroImage:String
+ },
 
-  featuresSection:[featureSchema],
+ featuresSection:[featureSchema],
 
-  founderSection:{
-    since:{
-      type:String,
-      default:""
-    },
-    title:{
-      type:String,
-      default:""
-    },
-    description:{
-      type:String,
-      default:""
-    },
-    founderName:{
-      type:String,
-      default:""
-    },
-    image:{
-      type:String,
-      default:""
-    }
-  },
+ founderSection:{
+  since:String,
+  title:String,
+  description:String,
+  founderName:String,
+  image:String
+ },
 
-  videoSection:{
-    title:{
-      type:String,
-      default:""
-    },
-    videoUrl:{
-      type:String,
-      default:""
-    }
-  },
+ videoSection:{
+  title:String,
+  videoUrl:String
+ },
 
-  servicesSection:[serviceSchema],
-  statsSection:[statSchema],
-  blogSection:[blogSchema],
-  testimonialSection:{
-    quote:{
-      type:String,
-      default:""
-    },
-    name:{
-      type:String,
-      default:""
-    },
-    role:{
-      type:String,
-      default:""
-    }
-  },
+ servicesSection:[serviceSchema],
 
-  metaTitle:{
-    type:String,
-    default:""
-  },
+ statsSection:[statSchema],
 
-  metaDescription:{
-    type:String,
-    default:""
-  }
+ blogSection:[blogSchema],
 
-},
-{
-  timestamps:true
+ testimonialSection:{
+  quote:String,
+  name:String,
+  role:String
+ },
+
+ metaTitle:String,
+ metaDescription:String
+
 })
 
 module.exports = mongoose.model("Page",pageSchema)
