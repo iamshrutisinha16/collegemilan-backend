@@ -1,151 +1,215 @@
 const express = require("express");
 const router = express.Router();
+
 const Page = require("../models/AdminHome");
 
+/*
+=====================================
+GET HOME PAGE
+=====================================
+*/
 router.get("/", async (req, res) => {
- try {
+  try {
 
-  let homeData = await Page.findOne({ pageName: "home" });
+    let homeData = await Page.findOne({ pageName: "home" });
 
-  if (!homeData) {
+    // if data not exist, create default document
+    if (!homeData) {
 
-   homeData = await Page.create({
-    pageName: "home",
-    heroSection: {},
-    featuresSection: [],
-    founderSection: {},
-    videoSection: {},
-    servicesSection: [],
-    statsSection: [],
-    blogSection: [],
-    testimonialSection: {},
-    metaTitle: "",
-    metaDescription: ""
-   });
+      homeData = await Page.create({
+        pageName: "home",
+        heroSection: { title: "", description: "", buttonText: "", heroImage: "" },
+        featuresSection: [],
+        founderSection: { since: "", title: "", description: "", founderName: "", image: "" },
+        videoSection: { title: "", videoUrl: "" },
+        servicesSection: [],
+        statsSection: [],
+        blogSection: [],
+        testimonialSection: { quote: "", name: "", role: "" },
+        metaTitle: "",
+        metaDescription: ""
+      });
+
+    }
+
+    res.status(200).json(homeData);
+
+  } catch (err) {
+
+    console.error("GET HOME ERROR:", err);
+
+    res.status(500).json({
+      message: "Error fetching home page",
+      error: err.message
+    });
 
   }
-
-  res.json(homeData);
-
- } catch (err) {
-
-  console.error(err);
-  res.status(500).json(err);
-
- }
 });
 
+
+/*
+=====================================
+UPDATE FULL HOME PAGE
+=====================================
+*/
 router.put("/", async (req, res) => {
+  try {
 
- try {
+    console.log("BODY:", req.body);
 
-  const updateData = req.body;
+    // remove fields that should not update
+    const { _id, __v, pageName, ...updateData } = req.body;
 
-  const updatedHome = await Page.findOneAndUpdate(
+    const updatedHome = await Page.findOneAndUpdate(
+      { pageName: "home" },
+      updateData,
+      {
+        returnDocument: "after",
+        runValidators: true,
+        upsert: true
+      }
+    );
 
-   { pageName: "home" },
+    res.status(200).json({
+      message: "Home Page Updated Successfully",
+      data: updatedHome
+    });
 
-   {
-    ...updateData,
-    pageName: "home"
-   },
+  } catch (err) {
 
-   {
-    new: true,
-    runValidators: true,
-    upsert: true
-   }
+    console.error("HOME UPDATE ERROR:", err);
 
-  );
+    res.status(500).json({
+      message: "Update Error",
+      error: err.message
+    });
 
-  res.json(updatedHome);
-
- } catch (err) {
-
-  console.error(err);
-  res.status(500).json(err);
-
- }
-
+  }
 });
 
+/*
+=====================================
+UPDATE SINGLE SECTION
+(optional CMS feature)
+=====================================
+*/
 router.patch("/:section", async (req, res) => {
+  try {
 
- try {
+    const section = req.params.section;
 
-  const section = req.params.section;
+    const updated = await Page.findOneAndUpdate(
+      { pageName: "home" },
+      { $set: { [section]: req.body } },
+      {
+        returnDocument: "after",
+        runValidators: true,
+        upsert: true
+      }
+    );
 
-  const updated = await Page.findOneAndUpdate(
+    res.json({
+      message: `${section} updated`,
+      data: updated
+    });
 
-   { pageName: "home" },
+  } catch (err) {
 
-   { $set: { [section]: req.body } },
+    console.error("PATCH /:section ERROR:", err);
 
-   { new: true }
+    res.status(500).json({
+      message: "Section update error",
+      error: err.message
+    });
 
-  );
-
-  res.json(updated);
-
- } catch (err) {
-
-  console.error(err);
-  res.status(500).json(err);
-
- }
-
+  }
 });
 
+
+/*
+=====================================
+ADD ITEM TO ARRAY SECTIONS
+(features, services, blogs, stats)
+=====================================
+*/
 router.post("/:section", async (req, res) => {
+  try {
 
- try {
+    const section = req.params.section;
 
-  const section = req.params.section;
+    const updated = await Page.findOneAndUpdate(
+      { pageName: "home" },
+      { $push: { [section]: req.body } },
+      {
+        returnDocument: "after",
+        runValidators: true,
+        upsert: true
+      }
+    );
 
-  const updated = await Page.findOneAndUpdate(
+    res.json({
+      message: `Item added to ${section}`,
+      data: updated
+    });
 
-   { pageName: "home" },
+  } catch (err) {
 
-   { $push: { [section]: req.body } },
+    console.error("POST /:section ERROR:", err);
 
-   { new: true }
+    res.status(500).json({
+      message: "Error adding item",
+      error: err.message
+    });
 
-  );
-
-  res.json(updated);
-
- } catch (err) {
-
-  console.error(err);
-  res.status(500).json(err);
-
- }
-
+  }
 });
 
+
+/*
+=====================================
+DELETE ARRAY ITEM
+=====================================
+*/
 router.delete("/:section/:index", async (req, res) => {
+  try {
 
- try {
+    const { section, index } = req.params;
 
-  const { section, index } = req.params;
+    let page = await Page.findOne({ pageName: "home" });
 
-  const page = await Page.findOne({ pageName: "home" });
+    if (!page || !page[section]) {
+      return res.status(400).json({
+        message: "Section not found"
+      });
+    }
 
-  if (!page) return res.status(404).json({message:"Page not found"});
+    const idx = parseInt(index);
 
-  page[section].splice(index,1);
+    if (isNaN(idx)) {
+      return res.status(400).json({
+        message: "Invalid index"
+      });
+    }
 
-  await page.save();
+    page[section].splice(idx, 1);
 
-  res.json(page);
+    await page.save();
 
- } catch (err) {
+    res.json({
+      message: "Item deleted",
+      data: page
+    });
 
-  console.error(err);
-  res.status(500).json(err);
+  } catch (err) {
 
- }
+    console.error("DELETE /:section/:index ERROR:", err);
 
+    res.status(500).json({
+      message: "Delete error",
+      error: err.message
+    });
+
+  }
 });
 
 module.exports = router;
