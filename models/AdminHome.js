@@ -1,8 +1,16 @@
 const mongoose = require("mongoose")
 
 const featureSchema = new mongoose.Schema({
- title:String,
- description:String,
+  title: String,
+  description: String,
+  link: {
+    type: String,
+    default: "/default-link" 
+  },
+  color: {
+    type: String,
+    default: "#000000" 
+  }
 })
 
 const serviceSchema = new mongoose.Schema({
