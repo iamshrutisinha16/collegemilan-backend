@@ -1,119 +1,67 @@
-const express = require('express');
+// routes/admin/events.js
+const express = require("express");
+const Event = require("../models/Event");
+const { protectAdmin, protect } = require("../middleware/authMiddleware"); // CommonJS style
+const upload = require("../config/multer"); // aapka multer setup
+
 const router = express.Router();
-const multer = require('multer');
-const fs = require('fs');      // Folder banane ke liye zaroori hai
-const path = require('path');  // Path handle karne ke liye
-const Event = require('../models/Event'); // Model import
 
-// --- 1. SMART STORAGE CONFIGURATION ---
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    const dir = 'uploads/';
-    
-    // Check karo folder hai ya nahi, nahi hai toh bana do
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    
-    cb(null, dir);
-  },
-  filename: function(req, file, cb) {
-    // File name ko unique banao (Date + Original Name without spaces)
-    const uniqueName = Date.now() + '-' + file.originalname.replace(/\s+/g, '-');
-    cb(null, uniqueName);
+// GET all events or banners
+router.get("/", async (req, res) => {
+  try {
+    const { type } = req.query;
+    const events = await Event.find(type ? { type } : {}).sort({ createdAt: -1 });
+    res.json(events);
+  } catch (err) {
+    console.error("Fetch events error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-const upload = multer({ storage: storage });
-
-// --- 2. ROUTES START HERE ---
-
-// GET: Sabhi events lao
-router.get('/', async (req, res) => {
+// POST add new event/banner
+router.post("/", protect, protectAdmin, upload.single("image"), async (req, res) => {
   try {
-    const events = await Event.find().sort({ createdAt: -1 });
-    res.status(200).json(events);
-  } catch (error) {
-    console.error("Error fetching events:", error);
-    res.status(500).json({ message: "Server Error", error: error.message });
+    const { title, type } = req.body;
+    const imageUrl = req.file?.path;
+
+    if (!title || !imageUrl) {
+      return res.status(400).json({ error: "Missing title or image" });
+    }
+
+    const event = new Event({ title, imageUrl, type: type || "event" });
+    await event.save();
+    res.status(201).json(event);
+  } catch (err) {
+    console.error("Add event error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// POST: Naya Event Add karo (Image Upload ke sath)
-router.post('/', upload.single('image'), async (req, res) => {
+// PUT update event
+router.put("/:id", protect, protectAdmin, upload.single("image"), async (req, res) => {
   try {
-    // 1. Check karo image upload hui ya nahi
-    if (!req.file) {
-      return res.status(400).json({ message: "Please upload an image file." });
-    }
+    const event = await Event.findById(req.params.id);
+    if (!event) return res.status(404).json({ error: "Event not found" });
 
-    const { title, description } = req.body;
-
-    // 2. Windows path fix: '\' ko '/' mein badlo
-    // Example: "uploads\image.jpg" -> "uploads/image.jpg"
-    const imagePath = req.file.path.replace(/\\/g, "/");
-
-    const event = new Event({
-      title,
-      description,
-      imageUrl: imagePath // DB me sahi URL save hoga
-    });
+    if (req.body.title) event.title = req.body.title;
+    if (req.file) event.imageUrl = req.file.path;
 
     await event.save();
-    res.status(201).json({ success: true, event });
-
-  } catch (error) {
-    console.error("Error adding event:", error);
-    res.status(500).json({ message: "Failed to add event", error: error.message });
+    res.json(event);
+  } catch (err) {
+    console.error("Update event error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// PUT: Event Update karo
-router.put('/:id', upload.single('image'), async (req, res) => {
+// DELETE event
+router.delete("/:id", protect, protectAdmin, async (req, res) => {
   try {
-    const { title, description } = req.body;
-    
-    let updateData = {
-      title,
-      description,
-      updatedAt: Date.now()
-    };
-
-    // Agar nayi image upload hui hai, tabhi purani replace karo
-    if (req.file) {
-      updateData.imageUrl = req.file.path.replace(/\\/g, "/");
-    }
-
-    const event = await Event.findByIdAndUpdate(req.params.id, updateData, { new: true });
-
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
-
-    res.status(200).json({ success: true, event });
-
-  } catch (error) {
-    console.error("Error updating event:", error);
-    res.status(500).json({ message: "Failed to update event", error: error.message });
-  }
-});
-
-// DELETE: Event Delete karo
-router.delete('/:id', async (req, res) => {
-  try {
-    const event = await Event.findByIdAndDelete(req.params.id);
-    
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
-
-    // (Optional) Agar chaho toh yahan fs.unlink use karke image bhi delete kar sakte ho
-    
-    res.status(200).json({ success: true, message: "Event deleted successfully" });
-
-  } catch (error) {
-    console.error("Error deleting event:", error);
-    res.status(500).json({ message: "Failed to delete event", error: error.message });
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ message: "Event deleted" });
+  } catch (err) {
+    console.error("Delete event error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
