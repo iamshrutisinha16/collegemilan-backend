@@ -38,6 +38,7 @@ app.use('/api/qualifications', require('./routes/qualificationRoutes'));
 app.use('/api/courses', require('./routes/course'));
 app.use('/api/enquiries', require('./routes/enquiry'));
 app.use("/api/payment", require("./routes/paymentRoutes")); 
+app.use("/api/general-enquiry", require("./routes/testenquiry")); 
 
 // Admin routes
 app.use('/api/admin', require('./routes/admin'));
