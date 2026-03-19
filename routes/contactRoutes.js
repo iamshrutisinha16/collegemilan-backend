@@ -1,7 +1,6 @@
 const express = require("express");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
-const qs = require("querystring"); // ✅ IMPORTANT
 const Contact = require("../models/Contact");
 
 const router = express.Router();
@@ -28,28 +27,19 @@ router.post("/", async (req, res) => {
     }
 
     // ===============================
-    // 2️⃣ VERIFY GOOGLE CAPTCHA (FIXED ✅)
+    // 2️⃣ VERIFY GOOGLE CAPTCHA (FIXED 🔥)
     // ===============================
     const captchaResponse = await axios.post(
-      "https://www.google.com/recaptcha/api/siteverify",
-      qs.stringify({
-        secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
-        response: captchaToken,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
+      `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.GOOGLE_RECAPTCHA_SECRET_KEY}&response=${captchaToken}`
     );
 
-    console.log("CAPTCHA RESPONSE:", captchaResponse.data); // 🔍 debug
+    console.log("CAPTCHA RESPONSE:", captchaResponse.data);
 
     if (!captchaResponse.data.success) {
       return res.status(400).json({
         success: false,
         message: "Captcha verification failed",
-        error: captchaResponse.data["error-codes"], // 👈 helpful
+        error: captchaResponse.data["error-codes"],
       });
     }
 
@@ -78,7 +68,7 @@ router.post("/", async (req, res) => {
     });
 
     // ===============================
-    // 5️⃣ SEND MAIL TO COLLEGE
+    // 5️⃣ SEND MAIL TO ADMIN
     // ===============================
     await transporter.sendMail({
       from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
@@ -95,7 +85,7 @@ router.post("/", async (req, res) => {
     });
 
     // ===============================
-    // 6️⃣ AUTO REPLY
+    // 6️⃣ AUTO REPLY TO USER
     // ===============================
     await transporter.sendMail({
       from: `"College Milan" <${process.env.EMAIL_USER}>`,
