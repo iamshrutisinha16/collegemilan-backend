@@ -1,15 +1,17 @@
 const express = require("express");
+const axios = require("axios");
 const nodemailer = require("nodemailer");
+const qs = require("querystring"); // ✅ IMPORTANT
 const Contact = require("../models/Contact");
 
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-  const { firstName, lastName, email, subject, message } = req.body;
+  const { firstName, lastName, email, subject, message, captchaToken } = req.body;
 
   try {
     // ===============================
-    // 1️⃣ VALIDATION
+    // 1️⃣ CHECK REQUIRED FIELDS
     // ===============================
     if (!firstName || !lastName || !email || !subject || !message) {
       return res.status(400).json({
@@ -18,8 +20,41 @@ router.post("/", async (req, res) => {
       });
     }
 
+    if (!captchaToken) {
+      return res.status(400).json({
+        success: false,
+        message: "Captcha token missing",
+      });
+    }
+
     // ===============================
-    // 2️⃣ SAVE TO DB
+    // 2️⃣ VERIFY GOOGLE CAPTCHA (FIXED ✅)
+    // ===============================
+    const captchaResponse = await axios.post(
+      "https://www.google.com/recaptcha/api/siteverify",
+      qs.stringify({
+        secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+        response: captchaToken,
+      }),
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
+    console.log("CAPTCHA RESPONSE:", captchaResponse.data); // 🔍 debug
+
+    if (!captchaResponse.data.success) {
+      return res.status(400).json({
+        success: false,
+        message: "Captcha verification failed",
+        error: captchaResponse.data["error-codes"], // 👈 helpful
+      });
+    }
+
+    // ===============================
+    // 3️⃣ SAVE TO DATABASE
     // ===============================
     const newContact = new Contact({
       firstName,
@@ -32,57 +67,63 @@ router.post("/", async (req, res) => {
     await newContact.save();
 
     // ===============================
-    // 3️⃣ EMAIL SETUP (FIXED ✅)
+    // 4️⃣ CREATE EMAIL TRANSPORTER
     // ===============================
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
+      service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
     });
 
-    // 🔥 check connection
-    await transporter.verify();
-    console.log("✅ SMTP Connected");
-
     // ===============================
-    // 4️⃣ SEND EMAIL (ONLY 1 MAIL)
+    // 5️⃣ SEND MAIL TO COLLEGE
     // ===============================
     await transporter.sendMail({
-      from: `"College Milan" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // 👉 tumhe hi mail ayega
-      subject: `New Contact: ${subject}`,
+      from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
+      to: "iamshrutisinha16@gmail.com",
+      subject: `New Student Enquiry: ${subject}`,
       html: `
-        <h2>New Enquiry</h2>
-        <p><b>Name:</b> ${firstName} ${lastName}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Subject:</b> ${subject}</p>
-        <p><b>Message:</b> ${message}</p>
+        <h2>New Student Enquiry</h2>
+        <p><strong>Name:</strong> ${firstName} ${lastName}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
       `,
     });
 
-    console.log("📩 Email sent");
+    // ===============================
+    // 6️⃣ AUTO REPLY
+    // ===============================
+    await transporter.sendMail({
+      from: `"College Milan" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Thank you for contacting College Milan",
+      html: `
+        <h3>Dear ${firstName},</h3>
+        <p>Thank you for contacting College Milan.</p>
+        <p>We have received your enquiry and our team will contact you soon.</p>
+        <br/>
+        <p>Regards,<br/>College Milan Team</p>
+      `,
+    });
 
     // ===============================
-    // 5️⃣ RESPONSE
+    // 7️⃣ SUCCESS RESPONSE
     // ===============================
-    return res.status(200).json({
+    res.status(200).json({
       success: true,
-      message: "Form submitted & email sent successfully!",
+      message: "Form submitted successfully and email sent!",
     });
 
   } catch (error) {
-    console.error("❌ ERROR:", error);
+    console.error("Contact Route Error:", error);
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
-      message: "Email failed or server error",
+      message: "Server error. Please try again later.",
     });
   }
 });
