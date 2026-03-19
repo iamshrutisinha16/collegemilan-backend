@@ -1,6 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
+const qs = require("querystring"); // ✅ IMPORTANT
 const Contact = require("../models/Contact");
 
 const router = express.Router();
@@ -27,23 +28,28 @@ router.post("/", async (req, res) => {
     }
 
     // ===============================
-    // 2️⃣ VERIFY GOOGLE CAPTCHA
+    // 2️⃣ VERIFY GOOGLE CAPTCHA (FIXED ✅)
     // ===============================
     const captchaResponse = await axios.post(
       "https://www.google.com/recaptcha/api/siteverify",
-      null,
+      qs.stringify({
+        secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+        response: captchaToken,
+      }),
       {
-        params: {
-          secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
-          response: captchaToken,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
         },
       }
     );
+
+    console.log("CAPTCHA RESPONSE:", captchaResponse.data); // 🔍 debug
 
     if (!captchaResponse.data.success) {
       return res.status(400).json({
         success: false,
         message: "Captcha verification failed",
+        error: captchaResponse.data["error-codes"], // 👈 helpful
       });
     }
 
@@ -66,8 +72,8 @@ router.post("/", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,   // Gmail address
-        pass: process.env.EMAIL_PASS,   // Gmail App Password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
@@ -76,7 +82,7 @@ router.post("/", async (req, res) => {
     // ===============================
     await transporter.sendMail({
       from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
-      to: "iamshrutisinha16@gmail.com",  // 👈 Yaha mail receive hoga
+      to: "iamshrutisinha16@gmail.com",
       subject: `New Student Enquiry: ${subject}`,
       html: `
         <h2>New Student Enquiry</h2>
@@ -89,7 +95,7 @@ router.post("/", async (req, res) => {
     });
 
     // ===============================
-    // 6️⃣ AUTO REPLY TO STUDENT (OPTIONAL BUT PROFESSIONAL)
+    // 6️⃣ AUTO REPLY
     // ===============================
     await transporter.sendMail({
       from: `"College Milan" <${process.env.EMAIL_USER}>`,
@@ -114,6 +120,7 @@ router.post("/", async (req, res) => {
 
   } catch (error) {
     console.error("Contact Route Error:", error);
+
     res.status(500).json({
       success: false,
       message: "Server error. Please try again later.",
