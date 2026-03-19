@@ -1,7 +1,6 @@
 const express = require("express");
 const axios = require("axios");
 const nodemailer = require("nodemailer");
-const qs = require("querystring"); // ✅ IMPORTANT
 const Contact = require("../models/Contact");
 
 const router = express.Router();
@@ -9,121 +8,84 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   const { firstName, lastName, email, subject, message, captchaToken } = req.body;
 
+  // 1️⃣ पक्का करें कि डेटा आ रहा है
+  if (!firstName || !lastName || !email || !subject || !message || !captchaToken) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing required fields or Captcha token",
+    });
+  }
+
   try {
-    // ===============================
-    // 1️⃣ CHECK REQUIRED FIELDS
-    // ===============================
-    if (!firstName || !lastName || !email || !subject || !message) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
+    // 2️⃣ VERIFY GOOGLE CAPTCHA
+    // नोट: यहाँ URLSearchParams का उपयोग करना ज्यादा आसान है
+    const params = new URLSearchParams();
+    params.append('secret', process.env.GOOGLE_RECAPTCHA_SECRET_KEY);
+    params.append('response', captchaToken);
 
-    if (!captchaToken) {
-      return res.status(400).json({
-        success: false,
-        message: "Captcha token missing",
-      });
-    }
-
-    // ===============================
-    // 2️⃣ VERIFY GOOGLE CAPTCHA (FIXED ✅)
-    // ===============================
     const captchaResponse = await axios.post(
       "https://www.google.com/recaptcha/api/siteverify",
-      qs.stringify({
-        secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
-        response: captchaToken,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
+      params
     );
 
-    console.log("CAPTCHA RESPONSE:", captchaResponse.data); // 🔍 debug
+    console.log("GOOGLE CAPTCHA RESULT:", captchaResponse.data);
 
     if (!captchaResponse.data.success) {
       return res.status(400).json({
         success: false,
-        message: "Captcha verification failed",
-        error: captchaResponse.data["error-codes"], // 👈 helpful
+        message: "Captcha verification failed. Please try again.",
+        errors: captchaResponse.data["error-codes"]
       });
     }
 
-    // ===============================
     // 3️⃣ SAVE TO DATABASE
-    // ===============================
-    const newContact = new Contact({
-      firstName,
-      lastName,
-      email,
-      subject,
-      message,
-    });
-
+    const newContact = new Contact({ firstName, lastName, email, subject, message });
     await newContact.save();
 
-    // ===============================
-    // 4️⃣ CREATE EMAIL TRANSPORTER
-    // ===============================
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    // 4️⃣ SEND EMAILS (इस हिस्से को try-catch में रखा है ताकि ईमेल फेल होने पर पूरा सर्वर 500 न दे)
+    try {
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS, // यहाँ Gmail App Password होना चाहिए
+        },
+      });
 
-    // ===============================
-    // 5️⃣ SEND MAIL TO COLLEGE
-    // ===============================
-    await transporter.sendMail({
-      from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
-      to: "iamshrutisinha16@gmail.com",
-      subject: `New Student Enquiry: ${subject}`,
-      html: `
-        <h2>New Student Enquiry</h2>
-        <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Subject:</strong> ${subject}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `,
-    });
+      // Admin को ईमेल
+      await transporter.sendMail({
+        from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
+        to: "iamshrutisinha16@gmail.com",
+        subject: `New Enquiry: ${subject}`,
+        html: `<h3>New Message</h3><p>From: ${firstName} ${lastName}</p><p>Email: ${email}</p><p>Message: ${message}</p>`,
+      });
 
-    // ===============================
-    // 6️⃣ AUTO REPLY
-    // ===============================
-    await transporter.sendMail({
-      from: `"College Milan" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Thank you for contacting College Milan",
-      html: `
-        <h3>Dear ${firstName},</h3>
-        <p>Thank you for contacting College Milan.</p>
-        <p>We have received your enquiry and our team will contact you soon.</p>
-        <br/>
-        <p>Regards,<br/>College Milan Team</p>
-      `,
-    });
+      // User को ऑटो-रिप्लाई
+      await transporter.sendMail({
+        from: `"College Milan" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: "We received your enquiry - College Milan",
+        text: `Hi ${firstName}, we will contact you soon!`,
+      });
 
-    // ===============================
-    // 7️⃣ SUCCESS RESPONSE
-    // ===============================
-    res.status(200).json({
+      console.log("Emails sent successfully!");
+    } catch (mailError) {
+      console.error("Mail Sending Failed:", mailError.message);
+      // हम यहाँ से return नहीं करेंगे क्योंकि डेटाबेस में मैसेज सेव हो चुका है
+    }
+
+    // 5️⃣ Final Success Response
+    return res.status(200).json({
       success: true,
-      message: "Form submitted successfully and email sent!",
+      message: "Your message has been received!",
     });
 
   } catch (error) {
-    console.error("Contact Route Error:", error);
-
-    res.status(500).json({
+    console.error("SERVER ERROR:", error.message);
+    return res.status(500).json({
       success: false,
-      message: "Server error. Please try again later.",
+      message: "Internal Server Error. Please check backend logs.",
+      details: error.message
     });
   }
 });
