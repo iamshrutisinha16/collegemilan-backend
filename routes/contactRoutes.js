@@ -45,13 +45,13 @@ router.post("/", async (req, res) => {
 
     console.log("CAPTCHA RESPONSE:", captchaResponse.data); // 🔍 debug
 
-    if (!captchaResponse.data.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Captcha verification failed",
-        error: captchaResponse.data["error-codes"], // 👈 helpful
-      });
-    }
+  //  if (!captchaResponse.data.success) {
+   //   return res.status(400).json({
+    //    success: false,
+     //   message: "Captcha verification failed",
+     //   error: captchaResponse.data["error-codes"], // 👈 helpful
+   //   });
+  //  }
 
     // ===============================
     // 3️⃣ SAVE TO DATABASE
