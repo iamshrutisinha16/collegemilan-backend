@@ -24,7 +24,8 @@ router.post("/", async (req, res) => {
 
     const captchaResponse = await axios.post(
       "https://www.google.com/recaptcha/api/siteverify",
-      params
+      params.toString(),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
     );
 
     console.log("CAPTCHA RESULT:", captchaResponse.data);
@@ -38,47 +39,38 @@ router.post("/", async (req, res) => {
     }
 
     // ✅ SAVE TO DB
-    const newContact = new Contact({
-      firstName,
-      lastName,
-      email,
-      subject,
-      message,
-    });
-
+    const newContact = new Contact({ firstName, lastName, email, subject, message });
     await newContact.save();
     console.log("✅ Data saved to DB");
 
-    // ✅ SEND RESPONSE FAST
+    // ✅ SEND RESPONSE TO USER FAST
     res.status(200).json({
       success: true,
       message: "Your message has been received!",
     });
 
-    // 🔥 EMAIL SEND (ASYNC + SAFE)
+    // 🔥 EMAIL SEND (ASYNC)
     (async () => {
       try {
         console.log("📧 Starting email process...");
 
-        // ✅ STRONG SMTP CONFIG (NO 'service: gmail')
         const transporter = nodemailer.createTransport({
           host: "smtp.gmail.com",
           port: 465,
           secure: true,
           auth: {
             user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
+            pass: process.env.EMAIL_PASS, // App password for Gmail
           },
         });
 
-        // ✅ VERIFY CONNECTION
         await transporter.verify();
         console.log("✅ SMTP Connected");
 
-        // 📩 ADMIN EMAIL
+        // 📩 ADMIN EMAIL (testing - your personal email)
         await transporter.sendMail({
           from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
-          to: process.env.EMAIL_USER, // send to yourself
+          to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER, // testing: tumhari personal email
           subject: `New Enquiry: ${subject}`,
           html: `
             <h3>New Message</h3>
@@ -93,19 +85,18 @@ router.post("/", async (req, res) => {
           from: `"College Milan" <${process.env.EMAIL_USER}>`,
           to: email,
           subject: "We received your enquiry - College Milan",
-          text: `Hi ${firstName}, we will contact you soon!`,
+          text: `Hi ${firstName},\n\nThank you for reaching out! We have received your message and will contact you soon.\n\nBest regards,\nCollege Milan`,
         });
 
         console.log("✅ Emails sent successfully");
 
       } catch (mailError) {
-        console.error("❌ FULL MAIL ERROR:", mailError);
+        console.error("❌ MAIL ERROR:", mailError);
       }
     })();
 
   } catch (error) {
     console.error("❌ SERVER ERROR:", error);
-
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
