@@ -6,10 +6,9 @@ const Contact = require("../models/Contact");
 const router = express.Router();
 
 router.post("/", async (req, res) => {
-  const { firstName, lastName, email, subject, message, captchaToken } = req.body;
+  const { firstName, mobile, email, subject, message, captchaToken } = req.body;
 
-  // ✅ VALIDATION
-  if (!firstName || !lastName || !email || !subject || !message || !captchaToken) {
+  if (!firstName || !mobile || !email || !subject || !message || !captchaToken) {
     return res.status(400).json({
       success: false,
       message: "Missing required fields or Captcha token",
@@ -17,7 +16,6 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // ✅ CAPTCHA VERIFY
     const params = new URLSearchParams();
     params.append("secret", process.env.GOOGLE_RECAPTCHA_SECRET_KEY.trim());
     params.append("response", captchaToken);
@@ -38,18 +36,15 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // ✅ SAVE TO DB
-    const newContact = new Contact({ firstName, lastName, email, subject, message });
+    const newContact = new Contact({ firstName, mobile, email, subject, message });
     await newContact.save();
-    console.log("✅ Data saved to DB");
+    console.log("Data saved to DB");
 
-    // ✅ SEND RESPONSE TO USER FAST
     res.status(200).json({
       success: true,
       message: "Your message has been received!",
     });
 
-    // 🔥 EMAIL SEND (ASYNC)
     (async () => {
       try {
         console.log("📧 Starting email process...");
@@ -60,27 +55,26 @@ router.post("/", async (req, res) => {
           secure: true,
           auth: {
             user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS, // App password for Gmail
+            pass: process.env.EMAIL_PASS,
           },
         });
 
         await transporter.verify();
-        console.log("✅ SMTP Connected");
+        console.log("SMTP Connected");
 
-        // 📩 ADMIN EMAIL (testing - your personal email)
         await transporter.sendMail({
           from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
-          to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER, // testing: tumhari personal email
+          to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
           subject: `New Enquiry: ${subject}`,
           html: `
             <h3>New Message</h3>
-            <p><b>Name:</b> ${firstName} ${lastName}</p>
+            <p><b>Name:</b> ${firstName}</p>
+            <p><b>Mobile:</b> ${mobile}</p>
             <p><b>Email:</b> ${email}</p>
             <p><b>Message:</b> ${message}</p>
           `,
         });
 
-        // 📩 USER EMAIL
         await transporter.sendMail({
           from: `"College Milan" <${process.env.EMAIL_USER}>`,
           to: email,
@@ -88,15 +82,15 @@ router.post("/", async (req, res) => {
           text: `Hi ${firstName},\n\nThank you for reaching out! We have received your message and will contact you soon.\n\nBest regards,\nCollege Milan`,
         });
 
-        console.log("✅ Emails sent successfully");
+        console.log(" Emails sent successfully");
 
       } catch (mailError) {
-        console.error("❌ MAIL ERROR:", mailError);
+        console.error(" MAIL ERROR:", mailError);
       }
     })();
 
   } catch (error) {
-    console.error("❌ SERVER ERROR:", error);
+    console.error("SERVER ERROR:", error);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
