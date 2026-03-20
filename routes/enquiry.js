@@ -4,7 +4,7 @@ const Enquiry = require("../models/Enquiry");
 const University = require("../models/University");
 const axios = require("axios");
 
-// ✅ SINGLE CLEAN ROUTE
+// ✅ SINGLE FINAL ROUTE
 router.post("/", async (req, res) => {
   try {
     const {
@@ -21,18 +21,10 @@ router.post("/", async (req, res) => {
       learningMode,
       message,
       source,
-      captchaToken
+      captchaToken,
     } = req.body;
 
-    // ✅ 1. BASIC VALIDATION (sab forms ke liye)
-    if (!fullName || !mobile || !email) {
-      return res.status(400).json({
-        success: false,
-        message: "Name, Email and Mobile are required",
-      });
-    }
-
-    // ✅ 2. CAPTCHA VERIFY
+    // ================= CAPTCHA =================
     if (!captchaToken) {
       return res.status(400).json({
         success: false,
@@ -57,7 +49,27 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // ✅ 3. UNIVERSITY CHECK (only if present)
+    // ================= SMART VALIDATION =================
+
+    // 👉 FULL FORM (course + university present)
+    if (course && university) {
+      if (!fullName || !mobile || !course || !university) {
+        return res.status(400).json({
+          success: false,
+          message: "Full form required fields missing",
+        });
+      }
+    } else {
+      // 👉 HOMEPAGE FORM
+      if (!fullName || !mobile) {
+        return res.status(400).json({
+          success: false,
+          message: "Name and Mobile required",
+        });
+      }
+    }
+
+    // ================= UNIVERSITY LOGIC =================
     let redirectLink = null;
 
     if (university) {
@@ -73,7 +85,7 @@ router.post("/", async (req, res) => {
       redirectLink = selectedUniversity.bitlink || null;
     }
 
-    // ✅ 4. SAVE DATA (sab forms ke liye common)
+    // ================= SAVE =================
     const enquiry = new Enquiry({
       fullName,
       email,
@@ -87,13 +99,13 @@ router.post("/", async (req, res) => {
       address,
       learningMode,
       message,
-      source, // important
+      source,
       status: "New",
     });
 
     await enquiry.save();
 
-    // ✅ 5. RESPONSE
+    // ================= RESPONSE =================
     res.status(201).json({
       success: true,
       message: "Enquiry submitted successfully",
@@ -107,6 +119,16 @@ router.post("/", async (req, res) => {
       success: false,
       message: "Server error",
     });
+  }
+});
+
+// ================= GET ALL (ADMIN) =================
+router.get("/", async (req, res) => {
+  try {
+    const enquiries = await Enquiry.find().sort({ createdAt: -1 });
+    res.json(enquiries);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
