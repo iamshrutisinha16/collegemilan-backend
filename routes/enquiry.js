@@ -1,10 +1,33 @@
 const express = require("express");
 const router = express.Router();
+const axios = require("axios");
 const Enquiry = require("../models/Enquiry");
 const University = require("../models/University");
-const axios = require("axios");
 
-// ✅ SINGLE FINAL ROUTE
+// ================= CAPTCHA VERIFY FUNCTION =================
+const verifyCaptcha = async (token) => {
+  try {
+    const secret = process.env.RECAPTCHA_SECRET_KEY;
+
+    const res = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify`,
+      null,
+      {
+        params: {
+          secret: secret,
+          response: token,
+        },
+      }
+    );
+
+    return res.data.success;
+  } catch (err) {
+    console.error("Captcha Error:", err.message);
+    return false;
+  }
+};
+
+// ================= MAIN ROUTE =================
 router.post("/", async (req, res) => {
   try {
     const {
@@ -21,59 +44,51 @@ router.post("/", async (req, res) => {
       learningMode,
       message,
       source,
-      captchaToken,
+      captchaToken, // 👈 important
     } = req.body;
 
-    // ================= CAPTCHA =================
-    if (!captchaToken) {
+    // ================= BASIC VALIDATION =================
+    if (!fullName || !mobile || !email || !city) {
       return res.status(400).json({
         success: false,
-        message: "Captcha required",
+        message: "Basic required fields missing",
       });
     }
 
-    const params = new URLSearchParams();
-    params.append("secret", process.env.GOOGLE_RECAPTCHA_SECRET_KEY.trim());
-    params.append("response", captchaToken);
-
-    const captchaRes = await axios.post(
-      "https://www.google.com/recaptcha/api/siteverify",
-      params.toString(),
-      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-    );
-
-    if (!captchaRes.data.success) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired captcha",
-      });
-    }
-
-    // ================= SMART VALIDATION =================
-
-    // 👉 FULL FORM (course + university present)
-    if (course && university) {
-      if (!fullName || !mobile || !course || !university) {
+    // ================= CAPTCHA CHECK (ONLY HOMEPAGE) =================
+    if (source === "Book a Session Form") {
+      if (!captchaToken) {
         return res.status(400).json({
           success: false,
-          message: "Full form required fields missing",
+          message: "Captcha missing",
         });
       }
-    } else {
-      // 👉 HOMEPAGE FORM
-      if (!fullName || !mobile) {
+
+      const isValidCaptcha = await verifyCaptcha(captchaToken);
+
+      if (!isValidCaptcha) {
         return res.status(400).json({
           success: false,
-          message: "Name and Mobile required",
+          message: "Invalid captcha",
         });
       }
     }
 
-    // ================= UNIVERSITY LOGIC =================
-    let redirectLink = null;
+    // ================= FULL FORM VALIDATION =================
+    if (source !== "Book a Session Form") {
+      if (!course && !university) {
+        return res.status(400).json({
+          success: false,
+          message: "Course and University required",
+        });
+      }
+    }
+
+    // ================= UNIVERSITY =================
+    let selectedUniversity = null;
 
     if (university) {
-      const selectedUniversity = await University.findById(university);
+      selectedUniversity = await University.findById(university);
 
       if (!selectedUniversity) {
         return res.status(404).json({
@@ -81,8 +96,6 @@ router.post("/", async (req, res) => {
           message: "University not found",
         });
       }
-
-      redirectLink = selectedUniversity.bitlink || null;
     }
 
     // ================= SAVE =================
@@ -90,8 +103,8 @@ router.post("/", async (req, res) => {
       fullName,
       email,
       mobile,
-      course,
-      university,
+      course: course || null,
+      university: university || null,
       qualification,
       gender,
       city,
@@ -99,41 +112,29 @@ router.post("/", async (req, res) => {
       address,
       learningMode,
       message,
-      source,
       status: "New",
     });
 
     await enquiry.save();
 
-    // ================= RESPONSE =================
     res.status(201).json({
       success: true,
       message: "Enquiry submitted successfully",
-      redirectLink,
+      redirectLink: selectedUniversity?.bitlink || null,
       data: enquiry,
     });
 
   } catch (err) {
-    console.error("Enquiry Error:", err);
+    console.error("Create Enquiry Error:", err);
     res.status(500).json({
       success: false,
       message: "Server error",
+      error: err.message,
     });
   }
 });
 
-// ================= GET ALL (ADMIN) =================
-router.get("/", async (req, res) => {
-  try {
-    const enquiries = await Enquiry.find().sort({ createdAt: -1 });
-    res.json(enquiries);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 module.exports = router;
-
 /* const express = require("express");
 const router = express.Router();
 const Enquiry = require("../models/Enquiry");
