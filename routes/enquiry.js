@@ -76,7 +76,7 @@ router.post("/", async (req, res) => {
 
     // ================= FULL FORM VALIDATION =================
     if (source !== "Book a Session Form") {
-      if (!course && !university) {
+      if (!course || !university) {
         return res.status(400).json({
           success: false,
           message: "Course and University required",
