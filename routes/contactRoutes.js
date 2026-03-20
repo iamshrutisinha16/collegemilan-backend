@@ -8,6 +8,7 @@ const router = express.Router();
 router.post("/", async (req, res) => {
   const { firstName, lastName, email, subject, message, captchaToken } = req.body;
 
+  // ✅ VALIDATION
   if (!firstName || !lastName || !email || !subject || !message || !captchaToken) {
     return res.status(400).json({
       success: false,
@@ -16,9 +17,9 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // CAPTCHA VERIFY
+    // ✅ CAPTCHA VERIFY
     const params = new URLSearchParams();
-    params.append("secret", process.env.GOOGLE_RECAPTCHA_SECRET_KEY);
+    params.append("secret", process.env.GOOGLE_RECAPTCHA_SECRET_KEY.trim());
     params.append("response", captchaToken);
 
     const captchaResponse = await axios.post(
@@ -26,9 +27,8 @@ router.post("/", async (req, res) => {
       params
     );
 
-    console.log("GOOGLE CAPTCHA RESULT:", captchaResponse.data);
+    console.log("CAPTCHA RESULT:", captchaResponse.data);
 
-    // ❌ STOP if captcha fails
     if (!captchaResponse.data.success) {
       return res.status(400).json({
         success: false,
@@ -47,28 +47,38 @@ router.post("/", async (req, res) => {
     });
 
     await newContact.save();
+    console.log("✅ Data saved to DB");
 
-    // ✅ SEND RESPONSE FAST (IMPORTANT 🔥)
+    // ✅ SEND RESPONSE FAST
     res.status(200).json({
       success: true,
       message: "Your message has been received!",
     });
 
-    // 🔥 SEND EMAIL ASYNC (NO DELAY)
+    // 🔥 EMAIL SEND (ASYNC + SAFE)
     (async () => {
       try {
+        console.log("📧 Starting email process...");
+
+        // ✅ STRONG SMTP CONFIG (NO 'service: gmail')
         const transporter = nodemailer.createTransport({
-          service: "gmail",
+          host: "smtp.gmail.com",
+          port: 465,
+          secure: true,
           auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
           },
         });
 
-        // Admin email
+        // ✅ VERIFY CONNECTION
+        await transporter.verify();
+        console.log("✅ SMTP Connected");
+
+        // 📩 ADMIN EMAIL
         await transporter.sendMail({
           from: `"College Milan Website" <${process.env.EMAIL_USER}>`,
-          to: "iamshrutisinha16@gmail.com",
+          to: process.env.EMAIL_USER, // send to yourself
           subject: `New Enquiry: ${subject}`,
           html: `
             <h3>New Message</h3>
@@ -78,7 +88,7 @@ router.post("/", async (req, res) => {
           `,
         });
 
-        // User confirmation email
+        // 📩 USER EMAIL
         await transporter.sendMail({
           from: `"College Milan" <${process.env.EMAIL_USER}>`,
           to: email,
@@ -86,14 +96,15 @@ router.post("/", async (req, res) => {
           text: `Hi ${firstName}, we will contact you soon!`,
         });
 
-        console.log("Emails sent successfully!");
+        console.log("✅ Emails sent successfully");
+
       } catch (mailError) {
-        console.error("Mail Sending Failed:", mailError.message);
+        console.error("❌ FULL MAIL ERROR:", mailError);
       }
     })();
 
   } catch (error) {
-    console.error("SERVER ERROR:", error.message);
+    console.error("❌ SERVER ERROR:", error);
 
     return res.status(500).json({
       success: false,
