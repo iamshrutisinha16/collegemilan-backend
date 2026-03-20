@@ -5,27 +5,27 @@ const Enquiry = require("../models/Enquiry");
 const University = require("../models/University");
 
 // ================= CAPTCHA VERIFY =================
-const verifyCaptcha = async (token) => {
-  try {
-    const secret = process.env.RECAPTCHA_SECRET_KEY;
+//const verifyCaptcha = async (token) => {
+  //try {
+  //  const secret = process.env.RECAPTCHA_SECRET_KEY;
 
-    const res = await axios.post(
-      "https://www.google.com/recaptcha/api/siteverify",
-      null,
-      {
-        params: {
-          secret: secret,
-          response: token,
-        },
-      }
-    );
+   // const res = await axios.post(
+     // "https://www.google.com/recaptcha/api/siteverify",
+    //  null,
+    //  {
+     //   params: {
+       //   secret: secret,
+        //  response: token,
+      //  },
+    //  }
+  //  );
 
-    return res.data.success;
-  } catch (err) {
-    console.error("Captcha Error:", err.message);
-    return false;
-  }
-};
+  //  return res.data.success;
+ // } catch (err) {
+//    console.error("Captcha Error:", err.message);
+ //   return false;
+ // }
+//};
 
 // ================= MAIN ROUTE =================
 router.post("/", async (req, res) => {
@@ -44,7 +44,7 @@ router.post("/", async (req, res) => {
       learningMode,
       message,
       source,
-      captchaToken,
+     // captchaToken,
     } = req.body;
 
     // ================= COMMON VALIDATION =================
@@ -56,23 +56,23 @@ router.post("/", async (req, res) => {
     }
 
     // ================= HOMEPAGE FORM =================
-    if (source === "Book a Session Form") {
-      if (!captchaToken) {
-        return res.status(400).json({
-          success: false,
-          message: "Captcha missing",
-        });
-      }
+    //if (source === "Book a Session Form") {
+     // if (!captchaToken) {
+      //  return res.status(400).json({
+       //   success: false,
+      //    message: "Captcha missing",
+     //   });
+    //  }
 
-      const isValidCaptcha = await verifyCaptcha(captchaToken);
+     // const isValidCaptcha = await verifyCaptcha(captchaToken);
 
-      if (!isValidCaptcha) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid captcha",
-        });
-      }
-    }
+   //   if (!isValidCaptcha) {
+     //   return res.status(400).json({
+        //  success: false,
+        //  message: "Invalid captcha",
+      //  });
+    //  }
+ //   }
 
     // ================= FULL FORM VALIDATION =================
     if (!source) {
