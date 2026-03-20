@@ -4,13 +4,13 @@ const axios = require("axios");
 const Enquiry = require("../models/Enquiry");
 const University = require("../models/University");
 
-// ================= CAPTCHA VERIFY FUNCTION =================
+// ================= CAPTCHA VERIFY =================
 const verifyCaptcha = async (token) => {
   try {
     const secret = process.env.RECAPTCHA_SECRET_KEY;
 
     const res = await axios.post(
-      `https://www.google.com/recaptcha/api/siteverify`,
+      "https://www.google.com/recaptcha/api/siteverify",
       null,
       {
         params: {
@@ -44,10 +44,10 @@ router.post("/", async (req, res) => {
       learningMode,
       message,
       source,
-      captchaToken, // 👈 important
+      captchaToken,
     } = req.body;
 
-    // ================= BASIC VALIDATION =================
+    // ================= COMMON VALIDATION =================
     if (!fullName || !mobile || !email || !city) {
       return res.status(400).json({
         success: false,
@@ -55,7 +55,7 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // ================= CAPTCHA CHECK (ONLY HOMEPAGE) =================
+    // ================= HOMEPAGE FORM =================
     if (source === "Book a Session Form") {
       if (!captchaToken) {
         return res.status(400).json({
@@ -75,7 +75,8 @@ router.post("/", async (req, res) => {
     }
 
     // ================= FULL FORM VALIDATION =================
-    if (source !== "Book a Session Form") {
+    if (!source) {
+      // means full form
       if (!course || !university) {
         return res.status(400).json({
           success: false,
@@ -84,40 +85,41 @@ router.post("/", async (req, res) => {
       }
     }
 
-    // ================= UNIVERSITY =================
+    // ================= UNIVERSITY CHECK =================
     let selectedUniversity = null;
 
     if (university) {
       selectedUniversity = await University.findById(university);
 
       if (!selectedUniversity) {
-        return res.status(404).json({
+        return res.status(400).json({
           success: false,
-          message: "University not found",
+          message: "Invalid University",
         });
       }
     }
 
-    // ================= SAVE =================
+    // ================= SAVE DATA =================
     const enquiry = new Enquiry({
       fullName,
       email,
       mobile,
       course: course || null,
       university: university || null,
-      qualification,
-      gender,
+      qualification: qualification || null,
+      gender: gender || null,
       city,
-      state,
-      address,
-      learningMode,
-      message,
+      state: state || null,
+      address: address || null,
+      learningMode: learningMode || null,
+      message: message || null,
       status: "New",
     });
 
     await enquiry.save();
 
-    res.status(201).json({
+    // ================= RESPONSE =================
+    return res.status(201).json({
       success: true,
       message: "Enquiry submitted successfully",
       redirectLink: selectedUniversity?.bitlink || null,
@@ -126,7 +128,8 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     console.error("Create Enquiry Error:", err);
-    res.status(500).json({
+
+    return res.status(500).json({
       success: false,
       message: "Server error",
       error: err.message,
