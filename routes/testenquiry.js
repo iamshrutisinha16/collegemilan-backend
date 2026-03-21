@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const GeneralEnquiry = require("../models/TestEnquiry");
 
-router.post("/general-enquiry", async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { fullName, email, mobile, city, course } = req.body;
 
