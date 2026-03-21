@@ -1,67 +1,63 @@
-// routes/admin/events.js
 const express = require("express");
-const Event = require("../models/Event");
-const { protectAdmin, protect } = require("../middleware/authMiddleware"); // CommonJS style
-const upload = require("../config/multer"); // aapka multer setup
-
 const router = express.Router();
+const Event = require("../models/Event");
+const upload = require("../config/multer"); // tumhara multer setup
 
-// GET all events or banners
+// Get all events (frontend)
 router.get("/", async (req, res) => {
   try {
-    const { type } = req.query;
-    const events = await Event.find(type ? { type } : {}).sort({ createdAt: -1 });
+    const events = await Event.find().sort({ createdAt: -1 });
     res.json(events);
   } catch (err) {
-    console.error("Fetch events error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.log(err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-// POST add new event/banner
-router.post("/", protect, protectAdmin, upload.single("image"), async (req, res) => {
+// Admin: add new event with image upload
+router.post("/", upload.single("image"), async (req, res) => {
   try {
-    const { title, type } = req.body;
-    const imageUrl = req.file?.path;
+    const { title } = req.body;
+    if (!title || !req.file) return res.status(400).json({ message: "Title and image required" });
 
-    if (!title || !imageUrl) {
-      return res.status(400).json({ error: "Missing title or image" });
-    }
+    const newEvent = new Event({
+      title,
+      image: `/uploads/${req.file.filename}` // saved image path
+    });
 
-    const event = new Event({ title, imageUrl, type: type || "event" });
-    await event.save();
-    res.status(201).json(event);
+    await newEvent.save();
+    res.status(201).json({ message: "Event added successfully", event: newEvent });
   } catch (err) {
-    console.error("Add event error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.log(err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-// PUT update event
-router.put("/:id", protect, protectAdmin, upload.single("image"), async (req, res) => {
+// Admin: update event (title or new image)
+router.put("/:id", upload.single("image"), async (req, res) => {
   try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ error: "Event not found" });
+    const { title } = req.body;
+    const updateData = { title };
 
-    if (req.body.title) event.title = req.body.title;
-    if (req.file) event.imageUrl = req.file.path;
+    // Agar new image upload hui hai, update path
+    if (req.file) updateData.image = `/uploads/${req.file.filename}`;
 
-    await event.save();
-    res.json(event);
+    const updatedEvent = await Event.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    res.json({ message: "Event updated successfully", event: updatedEvent });
   } catch (err) {
-    console.error("Update event error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.log(err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
-// DELETE event
-router.delete("/:id", protect, protectAdmin, async (req, res) => {
+// Admin: delete event
+router.delete("/:id", async (req, res) => {
   try {
     await Event.findByIdAndDelete(req.params.id);
-    res.json({ message: "Event deleted" });
+    res.json({ message: "Event deleted successfully" });
   } catch (err) {
-    console.error("Delete event error:", err);
-    res.status(500).json({ error: "Server error" });
+    console.log(err);
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
