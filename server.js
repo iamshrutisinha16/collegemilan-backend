@@ -49,7 +49,7 @@ app.use("/api/admin/courses", require("./routes/adminCourseRoutes"));
 app.use("/api/admin/enquiries", require("./routes/adminEnquiryRoutes"));
 app.use("/api/admin/universities", require("./routes/adminUniversitiesRoutes"));
 app.use("/api/admin/settings", require("./routes/adminSettingRoutes"));
-app.use("/api/admin/events", require("./routes/events"));
+app.use("/api/events", require("./routes/events"));
 app.use("/api/admin/careers", require("./routes/adminCareerRoutes"));
 app.use("/api/admin/home", require("./routes/adminHomeRoutes"));
 app.use("/api/admin/about", require("./routes/adminAboutRoutes"));
