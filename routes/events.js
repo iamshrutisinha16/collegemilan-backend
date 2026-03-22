@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Admin: add new event with image upload
+// --- ADMIN: ADD NEW EVENT ---
 router.post("/", upload.single("image"), async (req, res) => {
   try {
     const { title } = req.body;
@@ -22,31 +22,34 @@ router.post("/", upload.single("image"), async (req, res) => {
 
     const newEvent = new Event({
       title,
-      image: `/uploads/${req.file.filename}` // saved image path
+      // CHANGE HERE: req.file.path mein Cloudinary ka poora URL hota hai
+      image: req.file.path 
     });
 
     await newEvent.save();
     res.status(201).json({ message: "Event added successfully", event: newEvent });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server Error" });
+    console.log("Error details:", err); // Taaki Render logs mein dikhe
+    res.status(500).json({ message: "Server Error", error: err.message });
   }
 });
 
-// Admin: update event (title or new image)
+// --- ADMIN: UPDATE EVENT ---
 router.put("/:id", upload.single("image"), async (req, res) => {
   try {
     const { title } = req.body;
     const updateData = { title };
 
-    // Agar new image upload hui hai, update path
-    if (req.file) updateData.image = `/uploads/${req.file.filename}`;
+    // CHANGE HERE: Agar new image hai, toh req.file.path save karein
+    if (req.file) {
+      updateData.image = req.file.path; 
+    }
 
     const updatedEvent = await Event.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json({ message: "Event updated successfully", event: updatedEvent });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server Error" });
+    console.log("Error details:", err);
+    res.status(500).json({ message: "Server Error", error: err.message });
   }
 });
 
