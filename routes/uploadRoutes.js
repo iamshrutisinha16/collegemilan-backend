@@ -4,24 +4,25 @@ const upload = require("../config/multer");
 
 router.post("/upload", upload.single("image"), (req, res) => {
   try {
+    // Check karein file aayi ya nahi
     if (!req.file) {
+      console.log("No file received in req.file");
       return res.status(400).json({ message: "No file uploaded!" });
     }
 
-    // CLOUDINARY LOGIC:
-    // req.file.path mein pehle se hi poora URL hota hai (https://res.cloudinary.com/...)
-    const imageUrl = req.file.path;
+    // CLOUDINARY LOGIC: req.file.path ko use karein
+    // Ye hamesha https://res.cloudinary.com/... se shuru hota hai
+    const imageUrl = req.file.path; 
 
-    // Ab direct wahi URL bhej dijiye frontend ko
+    console.log("Upload Success! Image URL:", imageUrl);
     res.status(200).json({ imageUrl: imageUrl });
     
   } catch (error) {
-    console.error("Upload Error Details:", error);
+    console.error("UPLOAD CRASH ERROR:", error);
     res.status(500).json({ 
-      message: "Server Error during upload", 
-      error: error.message // Isse asli error dikhega
+      message: "Server Error", 
+      error: error.message 
     });
   }
 });
-
 module.exports = router;
