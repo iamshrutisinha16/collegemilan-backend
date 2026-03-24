@@ -50,7 +50,9 @@ const pageSchema = new mongoose.Schema({
   title:String,
   description:String,
   founderName:String,
-  image:String
+  image1:String,
+  image2:String,
+  image3:String
  },
 
  videoSection:{
