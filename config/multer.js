@@ -1,33 +1,16 @@
-const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const multer = require('multer');
+const multer = require("multer");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("./cloudinary");
 
-// 1. Cloudinary Configuration (Ye details aapko Cloudinary dashboard se milengi)
-cloudinary.config({
-  cloud_name: 'dfkbi63ro', 
-  api_key: '513638623697344',      
-  api_secret: '**********' 
-});
-
-// 2. Cloudinary Storage Setup
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: 'milan_education', // Is naam ka folder Cloudinary par ban jayega
-    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'],
-    public_id: (req, file) => {
-      const safeFileName = file.originalname.replace(/\s+/g, '-').split('.')[0];
-      return Date.now() + "-" + safeFileName;
-    }
+    folder: "milan_education",
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
   },
 });
 
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10 MB (Cloudinary free tier ke liye kaafi hai)
-  }
-});
+const upload = multer({ storage });
 
 module.exports = upload;
 
