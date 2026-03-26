@@ -39,18 +39,15 @@ const founderSectionSchema = new mongoose.Schema({
   image3: { type: String, trim: true }
 });
 
-// Video section schema
 const videoSectionSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true },
+  title: { type: String, trim: true },
   videoUrl: {
     type: String,
-    required: true,
     trim: true,
     validate: {
       validator: function (v) {
-        return /^https?:\/\/.+/.test(v); // basic URL check
-      },
-      message: props => `${props.value} is not a valid URL!`
+        return !v || /^https?:\/\/.+/.test(v);
+      }
     }
   }
 });

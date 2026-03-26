@@ -14,23 +14,57 @@ router.get("/", async (req, res) => {
     if (!homeData) {
       homeData = await Page.create({
         pageName: "home",
-        heroSection: { title: "", description: "", buttonText: "", heroImage: "" },
+
+        heroSection: {
+          title: "",
+          description: "",
+          buttonText: "",
+          heroImage: ""
+        },
+
         featuresSection: [],
-        founderSection: { since: "", title: "", description: "", founderName: "", image: "" },
-        videoSection: { title: "", videoUrl: "" },
+
+        // ✅ FIXED founderSection
+        founderSection: {
+          since: "",
+          title: "",
+          description: "",
+          founderName: "",
+          image1: "",
+          image2: "",
+          image3: ""
+        },
+
+        videoSection: {
+          title: "",
+          videoUrl: ""
+        },
+
         servicesSection: [],
+
         statsSection: [],
+
         blogSection: [],
-        testimonialSection: { quote: "", name: "", role: "" },
+
+        testimonialSection: {
+          quote: "",
+          name: "",
+          role: ""
+        },
+
         metaTitle: "",
         metaDescription: ""
       });
     }
 
     res.status(200).json(homeData);
+
   } catch (err) {
     console.error("GET HOME ERROR:", err);
-    res.status(500).json({ message: "Error fetching home page", error: err.message });
+    res.status(500).json({
+      message: "Error fetching home page",
+      error: err.message
+    });
   }
 });
 
@@ -45,7 +79,7 @@ router.put("/", async (req, res) => {
 
     const { _id, __v, pageName, ...updateData } = req.body;
 
-    // ✅ Clean and validate featuresSection
+    // ✅ Clean featuresSection
     if (updateData.featuresSection && Array.isArray(updateData.featuresSection)) {
       updateData.featuresSection = updateData.featuresSection.map(item => ({
         title: item.title || "",
@@ -55,19 +89,74 @@ router.put("/", async (req, res) => {
       }));
     }
 
-    // Ensure clean JSON to avoid extra React properties
-    const cleanData = JSON.parse(JSON.stringify(updateData));
+    // ✅ Clean statsSection (🔥 IMPORTANT FIX)
+    if (updateData.statsSection && Array.isArray(updateData.statsSection)) {
+      updateData.statsSection = updateData.statsSection.map(item => ({
+        number: item.number || "",
+        title: item.title || "",
+        description: item.description || ""
+      }));
+    }
+
+    // ✅ Clean servicesSection (safe)
+    if (updateData.servicesSection && Array.isArray(updateData.servicesSection)) {
+      updateData.servicesSection = updateData.servicesSection.map(item => ({
+        title: item.title || "",
+        description: item.description || ""
+      }));
+    }
+
+    // ✅ Clean blogSection
+    if (updateData.blogSection && Array.isArray(updateData.blogSection)) {
+      updateData.blogSection = updateData.blogSection.map(item => ({
+        title: item.title || "",
+        category: item.category || "",
+        image: item.image || ""
+      }));
+    }
+
+    // ✅ Clean founderSection
+    if (updateData.founderSection) {
+      updateData.founderSection = {
+        since: updateData.founderSection.since || "",
+        title: updateData.founderSection.title || "",
+        description: updateData.founderSection.description || "",
+        founderName: updateData.founderSection.founderName || "",
+        image1: updateData.founderSection.image1 || "",
+        image2: updateData.founderSection.image2 || "",
+        image3: updateData.founderSection.image3 || ""
+      };
+    }
+
+    // ✅ Clean videoSection
+    if (updateData.videoSection) {
+      updateData.videoSection = {
+        title: updateData.videoSection.title || "",
+        videoUrl: updateData.videoSection.videoUrl || ""
+      };
+    }
 
     const updatedHome = await Page.findOneAndUpdate(
       { pageName: "home" },
-      cleanData,
-      { returnDocument: "after", runValidators: true, upsert: true }
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+        upsert: true
+      }
     );
 
-    res.status(200).json({ message: "Home Page Updated Successfully", data: updatedHome });
+    res.status(200).json({
+      message: "Home Page Updated Successfully",
+      data: updatedHome
+    });
+
   } catch (err) {
     console.error("HOME UPDATE ERROR:", err);
-    res.status(500).json({ message: "Update Error", error: err.message });
+    res.status(500).json({
+      message: "Update Error",
+      error: err.message
+    });
   }
 });
 
@@ -85,20 +174,26 @@ router.patch("/:section", async (req, res) => {
     const updated = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $set: { [section]: cleanData } },
-      { returnDocument: "after", runValidators: true, upsert: true }
+      { new: true, runValidators: true, upsert: true }
     );
 
-    res.json({ message: `${section} updated`, data: updated });
+    res.json({
+      message: `${section} updated`,
+      data: updated
+    });
+
   } catch (err) {
-    console.error("PATCH /:section ERROR:", err);
-    res.status(500).json({ message: "Section update error", error: err.message });
+    console.error("PATCH ERROR:", err);
+    res.status(500).json({
+      message: "Section update error",
+      error: err.message
+    });
   }
 });
 
 /*
 =====================================
 ADD ITEM TO ARRAY SECTIONS
-(features, services, blogs, stats)
 =====================================
 */
 router.post("/:section", async (req, res) => {
@@ -106,7 +201,7 @@ router.post("/:section", async (req, res) => {
     const section = req.params.section;
     const newItem = JSON.parse(JSON.stringify(req.body));
 
-    // ✅ Default link for featuresSection
+    // ✅ default for feature link
     if (section === "featuresSection" && (!newItem.link || newItem.link.trim() === "")) {
       newItem.link = "/default-link";
     }
@@ -114,33 +209,57 @@ router.post("/:section", async (req, res) => {
     const updated = await Page.findOneAndUpdate(
       { pageName: "home" },
       { $push: { [section]: newItem } },
-      { returnDocument: "after", runValidators: true, upsert: true }
+      { new: true, runValidators: true, upsert: true }
     );
 
-    res.json({ message: `Item added to ${section}`, data: updated });
+    res.json({
+      message: `Item added to ${section}`,
+      data: updated
+    });
+
   } catch (err) {
-    console.error("POST /:section ERROR:", err);
-    res.status(500).json({ message: "Error adding item", error: err.message });
+    console.error("POST ERROR:", err);
+    res.status(500).json({
+      message: "Error adding item",
+      error: err.message
+    });
   }
 });
 
+/*
+=====================================
+DELETE ITEM FROM ARRAY
+=====================================
+*/
 router.delete("/:section/:index", async (req, res) => {
   try {
     const { section, index } = req.params;
+
     const page = await Page.findOne({ pageName: "home" });
 
-    if (!page || !page[section]) return res.status(400).json({ message: "Section not found" });
+    if (!page || !page[section]) {
+      return res.status(400).json({ message: "Section not found" });
+    }
 
     const idx = parseInt(index);
-    if (isNaN(idx)) return res.status(400).json({ message: "Invalid index" });
+    if (isNaN(idx)) {
+      return res.status(400).json({ message: "Invalid index" });
+    }
 
     page[section].splice(idx, 1);
     await page.save();
 
-    res.json({ message: "Item deleted", data: page });
+    res.json({
+      message: "Item deleted",
+      data: page
+    });
+
   } catch (err) {
-    console.error("DELETE /:section/:index ERROR:", err);
-    res.status(500).json({ message: "Delete error", error: err.message });
+    console.error("DELETE ERROR:", err);
+    res.status(500).json({
+      message: "Delete error",
+      error: err.message
+    });
   }
 });
 
