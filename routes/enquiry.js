@@ -142,6 +142,8 @@ try {
       },
     }
   );
+
+    console.log("NPF SUCCESS:", response.data);
 } catch (npfError) {
   console.error("NPF Error:", npfError.response?.data || npfError.message);
 }
