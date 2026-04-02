@@ -6,6 +6,9 @@ const University = require("../models/University");
 
 const { protect, protectAdmin } = require("../middleware/authMiddleware");
 
+// ==========================================
+// CREATE ENQUIRY
+// ==========================================
 router.post("/", async (req, res) => {
   try {
     const {
@@ -14,17 +17,25 @@ router.post("/", async (req, res) => {
       phone,
       course,
       university,
-      qualification, // Added
+      campus,        // ✅ ADDED
+      qualification,
       message,
     } = req.body;
 
     if (!name || !phone || !course || !university) {
-      return res.status(400).json({ success: false, message: "Required fields missing" });
+      return res.status(400).json({
+        success: false,
+        message: "Required fields missing",
+      });
     }
 
     const selectedUniversity = await University.findById(university);
+
     if (!selectedUniversity) {
-      return res.status(404).json({ success: false, message: "University not found" });
+      return res.status(404).json({
+        success: false,
+        message: "University not found",
+      });
     }
 
     const enquiry = await Enquiry.create({
@@ -33,7 +44,8 @@ router.post("/", async (req, res) => {
       phone,
       course,
       university,
-      qualification, // Save qualification too
+      campus,            // ✅ SAVE
+      qualification,
       message,
       status: "New",
     });
@@ -50,10 +62,11 @@ router.post("/", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server Error while submitting enquiry",
-      error: error.message, // helpful for debugging
+      error: error.message,
     });
   }
 });
+
 
 // ==========================================
 // ADMIN: GET ALL ENQUIRIES (FILTER SUPPORT)
@@ -67,6 +80,7 @@ router.get("/", protect, protectAdmin, async (req, res) => {
     const enquiries = await Enquiry.find(filter)
       .populate("course", "course_name")
       .populate("university", "name bitlink")
+      .populate("qualification", "name") // ✅ ADDED
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -92,7 +106,8 @@ router.get("/:id", protect, protectAdmin, async (req, res) => {
   try {
     const enquiry = await Enquiry.findById(req.params.id)
       .populate("course", "course_name")
-      .populate("university", "name bitlink");
+      .populate("university", "name bitlink")
+      .populate("qualification", "name"); // ✅ ADDED
 
     if (!enquiry) {
       return res.status(404).json({
@@ -126,6 +141,7 @@ router.put("/:id/status", protect, protectAdmin, async (req, res) => {
     const allowedStatus = [
       "New",
       "Contacted",
+      "Follow-Up",   // ✅ ADDED
       "Converted",
       "Rejected",
     ];
@@ -143,7 +159,8 @@ router.put("/:id/status", protect, protectAdmin, async (req, res) => {
       { new: true, runValidators: true }
     )
       .populate("course", "course_name")
-      .populate("university", "name bitlink");
+      .populate("university", "name bitlink")
+      .populate("qualification", "name");
 
     if (!enquiry) {
       return res.status(404).json({
@@ -181,7 +198,8 @@ router.put("/:id/remarks", protect, protectAdmin, async (req, res) => {
       { new: true }
     )
       .populate("course", "course_name")
-      .populate("university", "name bitlink");
+      .populate("university", "name bitlink")
+      .populate("qualification", "name");
 
     if (!enquiry) {
       return res.status(404).json({

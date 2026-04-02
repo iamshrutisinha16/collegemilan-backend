@@ -26,6 +26,12 @@ const enquirySchema = new mongoose.Schema(
       required: false,
     },
 
+     campus: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    
     fullName: {
       type: String,
       required: true,

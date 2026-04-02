@@ -44,6 +44,7 @@ router.post("/", async (req, res) => {
       learningMode,
       message,
       source,
+      campus
      // captchaToken,
     } = req.body;
 
@@ -113,6 +114,7 @@ router.post("/", async (req, res) => {
       address: address || null,
       learningMode: learningMode || null,
       message: message || null,
+      campus: campus || "School of Art and Architecture",
       status: "New",
     });
 
@@ -138,6 +140,7 @@ router.post("/", async (req, res) => {
 });
 
 module.exports = router;
+
 /* const express = require("express");
 const router = express.Router();
 const Enquiry = require("../models/Enquiry");
