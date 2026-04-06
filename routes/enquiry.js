@@ -120,38 +120,34 @@ router.post("/", async (req, res) => {
 
     await enquiry.save();
 
-  // पुराने कोड को हटाकर इसे लिखें
+    // ================= SEND TO NPF =================
 try {
-    const response = await axios.post(
-      "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
-      {
-        name: fullName,
-        email: email,
-        mobile: mobile,
-        state: state,
-        city: city,
-        campus: campus || "School of Art and Architecture",
-        course: course,
-        source: "milan_consultancy_services",
-        college_id: "712",
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "secret_key": "7f71cef029a77f941f86814f89177ab0",
-        }
+  const response = await axios.post(
+    "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
+    {
+      name: fullName,
+      email: email,
+      mobile: mobile,
+      state: state,
+      city: city,
+      campus: campus || "School of Art and Architecture",
+      course: course,
+      source: "milan_consultancy_services",
+      college_id: "712"
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "secret_key": "7f71cef029a77f941f86814f89177ab0"
       }
-    );
+    }
+  );
 
-    // --- ये लाइन आपको बताएगी कि डेटा गया या नहीं ---
-    console.log("NPF API Status:", response.status); // 200 मतलब OK
-    console.log("NPF API Response Data:", response.data); 
+  console.log("NPF SUCCESS:", response.data);
 
-} catch (apiError) {
-    // अगर API में कोई दिक्कत हुई (जैसे गलत की), तो यहाँ पता चलेगा
-    console.error("NPF API ERROR:", apiError.response ? apiError.response.data : apiError.message);
+} catch (npfError) {
+  console.error("NPF ERROR:", npfError.response?.data || npfError.message);
 }
-    // ================= RESPONSE =================
     return res.status(201).json({
       success: true,
       message: "Enquiry submitted successfully",
