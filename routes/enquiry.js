@@ -121,94 +121,29 @@ router.post("/", async (req, res) => {
     await enquiry.save();
 
     // ================= SEND TO NPF =================
-try {
-  let response;
-
-  // 👉 TRY 1: access-key header
   try {
-    response = await axios.post(
-      "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
-      {
-        name: fullName,
-        email: email,
-        mobile: mobile,
-        state: state,
-        city: city,
-        campus: campus || "School of Art and Architecture",
-        course: course,
-        source: "milan_consultancy_services",
-        college_id: "712",
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "access-key": "7f71cef029a77f941f86814f89177ab0",
-        },
-      }
-    );
+  const response = await axios.post(
+    "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
+    {
+      name: fullName,
+      email: email,
+      mobile: mobile,
+      state: state,
+      city: city,
+      campus: campus || "School of Art and Architecture",
+      course: course,
 
-    console.log("NPF SUCCESS (access-key):", response.data);
-
-  } catch (err1) {
-
-    // 👉 TRY 2: secret-key header
-    try {
-      response = await axios.post(
-        "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
-        {
-          name: fullName,
-          email: email,
-          mobile: mobile,
-          state: state,
-          city: city,
-          campus: campus || "School of Art and Architecture",
-          course: course,
-          source: "milan_consultancy_services",
-          college_id: "712",
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "secret-key": "7f71cef029a77f941f86814f89177ab0",
-          },
-        }
-      );
-
-      console.log("NPF SUCCESS (secret-key):", response.data);
-
-    } catch (err2) {
-
-      // 👉 TRY 3: secret_key in body
-      try {
-        response = await axios.post(
-          "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
-          {
-            name: fullName,
-            email: email,
-            mobile: mobile,
-            state: state,
-            city: city,
-            campus: campus || "School of Art and Architecture",
-            course: course,
-            source: "milan_consultancy_services",
-            college_id: "712",
-            secret_key: "7f71cef029a77f941f86814f89177ab0",
-          }
-        );
-
-        console.log("NPF SUCCESS (body key):", response.data);
-
-      } catch (err3) {
-        console.error(
-          "NPF FINAL ERROR:",
-          err3.response?.data || err3.message
-        );
-      }
+      // 👇 IMPORTANT (sheet ke according)
+      source: "milan_consultancy_services",
+      college_id: "712",
+      secret_key: process.env.NPF_SECRET_KEY, // ✅ yaha use hoga
     }
-  }
+  );
 
-} catch (error) {
-  console.error("NPF ERROR:", error.message);
+  console.log("NPF SUCCESS:", response.data);
+
+} catch (err) {
+  console.error("NPF ERROR:", err.response?.data || err.message);
 }
     return res.status(201).json({
       success: true,
