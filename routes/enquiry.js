@@ -4,29 +4,6 @@ const axios = require("axios");
 const Enquiry = require("../models/Enquiry");
 const University = require("../models/University");
 
-// ================= CAPTCHA VERIFY =================
-//const verifyCaptcha = async (token) => {
-  //try {
-  //  const secret = process.env.RECAPTCHA_SECRET_KEY;
-
-   // const res = await axios.post(
-     // "https://www.google.com/recaptcha/api/siteverify",
-    //  null,
-    //  {
-     //   params: {
-       //   secret: secret,
-        //  response: token,
-      //  },
-    //  }
-  //  );
-
-  //  return res.data.success;
- // } catch (err) {
-//    console.error("Captcha Error:", err.message);
- //   return false;
- // }
-//};
-
 // ================= MAIN ROUTE =================
 router.post("/", async (req, res) => {
   try {
@@ -45,10 +22,9 @@ router.post("/", async (req, res) => {
       message,
       source,
       campus
-     // captchaToken,
     } = req.body;
 
-    // ================= COMMON VALIDATION =================
+    // ================= BASIC VALIDATION =================
     if (!fullName || !mobile || !email || !city) {
       return res.status(400).json({
         success: false,
@@ -56,28 +32,8 @@ router.post("/", async (req, res) => {
       });
     }
 
-    // ================= HOMEPAGE FORM =================
-    //if (source === "Book a Session Form") {
-     // if (!captchaToken) {
-      //  return res.status(400).json({
-       //   success: false,
-      //    message: "Captcha missing",
-     //   });
-    //  }
-
-     // const isValidCaptcha = await verifyCaptcha(captchaToken);
-
-   //   if (!isValidCaptcha) {
-     //   return res.status(400).json({
-        //  success: false,
-        //  message: "Invalid captcha",
-      //  });
-    //  }
- //   }
-
     // ================= FULL FORM VALIDATION =================
     if (!source) {
-      // means full form
       if (!course || !university) {
         return res.status(400).json({
           success: false,
@@ -100,6 +56,14 @@ router.post("/", async (req, res) => {
       }
     }
 
+    // ================= FORMAT COURSE FOR NPF =================
+    const formattedCourse = course
+      ? course.replace(/\./g, "").trim()
+      : null;
+
+    console.log("Original Course:", course);
+    console.log("Formatted Course:", formattedCourse);
+
     // ================= SAVE DATA =================
     const enquiry = new Enquiry({
       fullName,
@@ -121,30 +85,36 @@ router.post("/", async (req, res) => {
     await enquiry.save();
 
     // ================= SEND TO NPF =================
-  try {
-  const response = await axios.post(
-    "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
-    {
-      name: fullName,
-      email: email,
-      mobile: mobile,
-      state: state,
-      city: city,
-      campus: campus || "School of Art and Architecture",
-      course: course,
+    try {
+      if (!process.env.NPF_SECRET_KEY) {
+        console.warn("⚠️ NPF SECRET KEY MISSING");
+      }
 
-      // 👇 IMPORTANT (sheet ke according)
-      source: "milan_consultancy_services",
-      college_id: "712",
-      secret_key: process.env.NPF_SECRET_KEY, // ✅ yaha use hoga
+      const response = await axios.post(
+        "https://api.nopaperforms.com/dataporting/712/milan_consultancy_services",
+        {
+          name: fullName,
+          email: email,
+          mobile: mobile,
+          state: state,
+          city: city,
+          campus: campus || "School of Art and Architecture",
+          course: formattedCourse, // ✅ FIXED
+
+          source: "milan_consultancy_services",
+          college_id: "712",
+          secret_key: process.env.NPF_SECRET_KEY,
+        }
+      );
+
+      console.log("✅ NPF SUCCESS:", response.data);
+
+    } catch (err) {
+      console.error("❌ NPF ERROR:", err.response?.data || err.message);
+      // ❗ IMPORTANT: yaha throw nahi karna (warna 500 aayega)
     }
-  );
 
-  console.log("NPF SUCCESS:", response.data);
-
-} catch (err) {
-  console.error("NPF ERROR:", err.response?.data || err.message);
-}
+    // ================= FINAL RESPONSE =================
     return res.status(201).json({
       success: true,
       message: "Enquiry submitted successfully",
@@ -153,7 +123,7 @@ router.post("/", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Create Enquiry Error:", err);
+    console.error("❌ Create Enquiry Error:", err);
 
     return res.status(500).json({
       success: false,
