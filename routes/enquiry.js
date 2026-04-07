@@ -3,7 +3,7 @@ const router = express.Router();
 const axios = require("axios");
 const Enquiry = require("../models/Enquiry");
 const University = require("../models/University");
-const CourseModel = require("../models/Course"); // ✅ IMPORTANT
+const CourseModel = require("../models/Course"); 
 
 // ================= MAIN ROUTE =================
 router.post("/", async (req, res) => {
@@ -12,7 +12,7 @@ router.post("/", async (req, res) => {
       fullName,
       email,
       mobile,
-      course,
+      course, // Frontend se aane wala course name (e.g., "Ph.D in Architecture")
       university,
       qualification,
       gender,
@@ -45,24 +45,19 @@ router.post("/", async (req, res) => {
 
     // ================= UNIVERSITY CHECK =================
     let selectedUniversity = null;
-
     if (university) {
       selectedUniversity = await University.findById(university);
-
       if (!selectedUniversity) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid University",
-        });
+        return res.status(400).json({ success: false, message: "Invalid University" });
       }
     }
 
     // ================= COURSE FIND (STRING → OBJECTID) =================
     let courseId = null;
-
     if (course) {
+      // FIX: Case-insensitive search taaki spelling exact match ho jaye
       const foundCourse = await CourseModel.findOne({
-        course_name: course
+        course_name: { $regex: new RegExp("^" + course + "$", "i") }
       });
 
       if (foundCourse) {
@@ -73,19 +68,18 @@ router.post("/", async (req, res) => {
     }
 
     // ================= FORMAT COURSE FOR NPF =================
-    const formattedCourse = course
-      ? course.replace(/\./g, "").trim()
-      : null;
+    // FIX: Dots ko remove MAT karein. NPF ko exact dots wala naam chahiye.
+    // Sirf extra spaces trim karein.
+    const courseForNPF = course ? course.trim() : null;
 
-    console.log("Original Course:", course);
-    console.log("Formatted Course:", formattedCourse);
+    console.log("Submitting Course to NPF:", courseForNPF);
 
-    // ================= SAVE DATA =================
+    // ================= SAVE DATA TO YOUR DB =================
     const enquiry = new Enquiry({
       fullName,
       email,
       mobile,
-      course: courseId, // ✅ FIXED (ObjectId)
+      course: courseId, 
       university: university || null,
       qualification: qualification || null,
       gender: gender || null,
@@ -115,7 +109,7 @@ router.post("/", async (req, res) => {
           state: state,
           city: city,
           campus: campus || "School of Art and Architecture",
-          course: formattedCourse, // ✅ STRING for NPF
+          course: courseForNPF, // ✅ EXACT STRING (with dots)
 
           source: "milan_consultancy_services",
           college_id: "712",
@@ -123,11 +117,10 @@ router.post("/", async (req, res) => {
         }
       );
 
-      console.log("✅ NPF SUCCESS:", response.data);
+      console.log("✅ NPF RESPONSE:", response.data);
 
     } catch (err) {
-      console.error("❌ NPF ERROR:", err.response?.data || err.message);
-      // ❗ IMPORTANT: yaha throw nahi karna
+      console.error("❌ NPF API ERROR:", err.response?.data || err.message);
     }
 
     // ================= FINAL RESPONSE =================
@@ -140,7 +133,6 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     console.error("❌ Create Enquiry Error:", err);
-
     return res.status(500).json({
       success: false,
       message: "Server error",
