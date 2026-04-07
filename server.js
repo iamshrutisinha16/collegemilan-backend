@@ -56,7 +56,7 @@ app.use("/api/admin/about", require("./routes/adminAboutRoutes"));
 app.use("/api/admin", require("./routes/adminPlacement"));
 app.use("/api/admin/payment-settings", require("./routes/adminPaymentSettings"));
 
-app.use("/api/admin/campuses", require("./routes/campus")); 
+app.use("/api/admin/campuses", require("./routes/campus"));
 app.use("/api/admin", require("./routes/uploadRoutes")); 
 
 const PORT = process.env.PORT || 5000;
