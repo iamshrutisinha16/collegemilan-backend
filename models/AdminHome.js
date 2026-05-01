@@ -21,11 +21,14 @@ const statSchema = new mongoose.Schema({
   description: { type: String, trim: true }
 });
 
-// Blog schema
 const blogSchema = new mongoose.Schema({
   title: { type: String, required: true, trim: true },
-  category: { type: String, required: true, trim: true },
-  image: { type: String, required: true, trim: true }
+  category: { type: String, required: true, trim: true }, 
+  image: { type: String, required: true, trim: true },
+  link: { type: String, required: true, trim: true },
+  isActive: { type: Boolean, default: true }, 
+  order: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
 });
 
 // Founder section schema

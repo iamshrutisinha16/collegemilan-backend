@@ -263,4 +263,82 @@ router.delete("/:section/:index", async (req, res) => {
   }
 });
 
+router.get("/", async (req, res) => {
+  try {
+    const blogs = await Blog.find({ isActive: true }).sort({ order: 1 });
+    res.json(blogs);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// =========================
+// ADD BLOG (ADMIN)
+// =========================
+router.post("/", async (req, res) => {
+  try {
+    const { title, category, image, link, order } = req.body;
+
+    if (!title || !category || !image || !link) {
+      return res.status(400).json({ message: "All fields required" });
+    }
+
+    const blog = await Blog.create({
+      title,
+      category,
+      image,
+      link,
+      order
+    });
+
+    res.json({
+      message: "Blog created successfully",
+      data: blog
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// =========================
+// UPDATE BLOG
+// =========================
+router.put("/:id", async (req, res) => {
+  try {
+    const updated = await Blog.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+
+    res.json({
+      message: "Blog updated",
+      data: updated
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// =========================
+// DELETE BLOG
+// =========================
+router.delete("/:id", async (req, res) => {
+  try {
+    await Blog.findByIdAndDelete(req.params.id);
+
+    res.json({
+      message: "Blog deleted"
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;
