@@ -11,7 +11,7 @@ app.use(express.json());
 
 // CORS configuration
 const corsOptions = {
-  origin: ["http://localhost:5173", "https://milaneducation.vercel.app", "https://collegemilan.web2onlinesolutions.com", "http://milaneducation.web2onlinesolutions.com"],
+  origin: ["http://localhost:5173", "https://milaneducation.vercel.app", "https://collegemilan.web2onlinesolutions.com", "https://collegemilan.com"],
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-auth-token"],
   credentials: true
